@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ucl-analytics-2021-22-champions-league-analysis'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True  # Enable for debugging deployment issues
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app', '*']
 
@@ -136,10 +136,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Security settings - Updated for production
-SECURE_SSL_REDIRECT = True  # Enabled for production
-SESSION_COOKIE_SECURE = True  # Enabled for production
-CSRF_COOKIE_SECURE = True  # Enabled for production
+# Security settings - Updated for Vercel deployment
+SECURE_SSL_REDIRECT = False  # Disabled for Vercel
+SESSION_COOKIE_SECURE = False  # Disabled for Vercel
+CSRF_COOKIE_SECURE = False  # Disabled for Vercel
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# CSRF settings for Vercel
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://ucl-data-analyst-kalq6kb0f-aneeshs-projects.vercel.app',
+]
