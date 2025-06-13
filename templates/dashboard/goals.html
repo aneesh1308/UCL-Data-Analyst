@@ -1,0 +1,326 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Goals Analysis - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-futbol text-primary me-3"></i>
+                    Goals Analysis
+                </h1>
+                <p class="lead text-secondary">Comprehensive goal scoring patterns and efficiency metrics</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="metric-value">{{ total_goals }}</div>
+                <div class="metric-label">Total Goals</div>
+                <div class="metric-detail">Tournament Total</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="metric-value">{{ avg_conversion_rate|floatformat:1 }}%</div>
+                <div class="metric-label">Avg Conversion Rate</div>
+                <div class="metric-detail">Goals per Attempt</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="metric-value">{{ top_converter.goals }}</div>
+                <div class="metric-label">Best Converter</div>
+                <div class="metric-detail">{{ top_converter.player_name }}</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">{{ goal_methods.Right_Foot|add:goal_methods.Left_Foot|add:goal_methods.Headers }}</div>
+                <div class="metric-label">Total Scored</div>
+                <div class="metric-detail">By All Methods</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Distribution Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    <h5 class="mb-0">Goals by Scoring Method</h5>
+                </div>
+                <div class="card-body">
+                    <div id="methodsChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <h5 class="mb-0">Goals by Area</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="area-stat">
+                                <div class="area-value">{{ goal_areas.Inside_Area }}</div>
+                                <div class="area-label">Inside Area</div>
+                                <div class="area-percentage">
+                                    {% widthratio goal_areas.Inside_Area total_goals 100 %}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="area-stat">
+                                <div class="area-value">{{ goal_areas.Outside_Area }}</div>
+                                <div class="area-label">Outside Area</div>
+                                <div class="area-percentage">
+                                    {% widthratio goal_areas.Outside_Area total_goals 100 %}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Versatile Scorers -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-magic me-2"></i>
+                    <h5 class="mb-0">Most Versatile Scorers</h5>
+                </div>
+                <div class="card-body">
+                    <div id="versatilityChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crosshairs me-2"></i>
+                    <h5 class="mb-0">Penalty Specialists</h5>
+                </div>
+                <div class="card-body">
+                    {% for player in penalty_specialists %}
+                    <div class="specialist-card mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ player.player_name }}</strong>
+                                <br><small class="text-muted">{{ player.club }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ player.penalties }}</span>
+                                <br><small class="text-muted">Penalties</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Goal Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-table me-2"></i>
+                    <h5 class="mb-0">Detailed Goal Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Club</th>
+                                    <th>Goals</th>
+                                    <th>Right Foot</th>
+                                    <th>Left Foot</th>
+                                    <th>Headers</th>
+                                    <th>Inside Area</th>
+                                    <th>Outside Area</th>
+                                    <th>Conversion Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in versatile_scorers %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ player.player_name }}</strong>
+                                        <br><small class="text-muted">{{ player.position }}</small>
+                                    </td>
+                                    <td>{{ player.club }}</td>
+                                    <td>{{ player.goals }}</td>
+                                    <td>{{ player.right_foot }}</td>
+                                    <td>{{ player.left_foot }}</td>
+                                    <td>{{ player.headers }}</td>
+                                    <td>{{ player.inside_area }}</td>
+                                    <td>{{ player.outside_areas }}</td>
+                                    <td>{{ player.conversion_rate|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Methods Chart
+    {% if methods_chart %}
+    var methodsData = {{ methods_chart|safe }};
+    Plotly.newPlot('methodsChart', methodsData.data, methodsData.layout, {responsive: true});
+    {% endif %}
+    
+    // Versatility Chart
+    {% if versatility_chart %}
+    var versatilityData = {{ versatility_chart|safe }};
+    Plotly.newPlot('versatilityChart', versatilityData.data, versatilityData.layout, {responsive: true});
+    {% endif %}
+});
+</script>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.metric-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.area-stat {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.area-stat:hover {
+    background: rgba(59, 130, 246, 0.15);
+    transform: translateY(-3px);
+}
+
+.area-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.area-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.area-percentage {
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+}
+
+.specialist-card {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.specialist-card:hover {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateX(5px);
+}
+
+.table-dark th {
+    background: rgba(59, 130, 246, 0.2);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-dark tbody tr:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %} 

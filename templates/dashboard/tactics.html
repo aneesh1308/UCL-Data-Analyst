@@ -1,0 +1,317 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Tactical Analysis - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-chess text-primary me-3"></i>
+                    Tactical Analysis
+                </h1>
+                <p class="lead text-secondary">Comprehensive tactical patterns and strategic insights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="metric-value">{{ total_teams }}</div>
+                <div class="metric-label">Total Teams</div>
+                <div class="metric-detail">Tournament Participants</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="metric-value">{{ avg_possession|floatformat:1 }}%</div>
+                <div class="metric-label">Avg Possession</div>
+                <div class="metric-detail">Ball Control</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="metric-value">{{ most_effective_formation.name }}</div>
+                <div class="metric-label">Most Effective</div>
+                <div class="metric-detail">{{ most_effective_formation.win_rate|floatformat:1 }}% Win Rate</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">{{ avg_passes|floatformat:0 }}</div>
+                <div class="metric-label">Avg Passes</div>
+                <div class="metric-detail">Per Match</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formation Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    <h5 class="mb-0">Formation Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="formationChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <h5 class="mb-0">Formation Success</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for formation in formation_stats %}
+                        <div class="col-6 mb-3">
+                            <div class="formation-stat">
+                                <div class="formation-value">{{ formation.win_rate|floatformat:1 }}%</div>
+                                <div class="formation-label">{{ formation.name }}</div>
+                                <div class="formation-detail">
+                                    {{ formation.matches }} Matches
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tactical Patterns -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-magic me-2"></i>
+                    <h5 class="mb-0">Tactical Patterns</h5>
+                </div>
+                <div class="card-body">
+                    <div id="patternsChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crosshairs me-2"></i>
+                    <h5 class="mb-0">Key Insights</h5>
+                </div>
+                <div class="card-body">
+                    {% for insight in tactical_insights %}
+                    <div class="insight-card mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ insight.title }}</strong>
+                                <br><small class="text-muted">{{ insight.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ insight.impact }}</span>
+                                <br><small class="text-muted">Impact</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tactical Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-table me-2"></i>
+                    <h5 class="mb-0">Detailed Tactical Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>Formation</th>
+                                    <th>Possession</th>
+                                    <th>Passes</th>
+                                    <th>Accuracy</th>
+                                    <th>Pressures</th>
+                                    <th>Recoveries</th>
+                                    <th>Success</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in team_tactics %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ team.name }}</strong>
+                                        <br><small class="text-muted">{{ team.style }}</small>
+                                    </td>
+                                    <td>{{ team.formation }}</td>
+                                    <td>{{ team.possession|floatformat:1 }}%</td>
+                                    <td>{{ team.passes }}</td>
+                                    <td>{{ team.pass_accuracy|floatformat:1 }}%</td>
+                                    <td>{{ team.pressures }}</td>
+                                    <td>{{ team.recoveries }}</td>
+                                    <td>{{ team.success_rate|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formation Chart
+    {% if formation_chart %}
+    var formationData = {{ formation_chart|safe }};
+    Plotly.newPlot('formationChart', formationData.data, formationData.layout, {responsive: true});
+    {% endif %}
+    
+    // Patterns Chart
+    {% if patterns_chart %}
+    var patternsData = {{ patterns_chart|safe }};
+    Plotly.newPlot('patternsChart', patternsData.data, patternsData.layout, {responsive: true});
+    {% endif %}
+});
+</script>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.metric-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.formation-stat {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.formation-stat:hover {
+    background: rgba(59, 130, 246, 0.15);
+    transform: translateY(-3px);
+}
+
+.formation-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.formation-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.formation-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.insight-card {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateX(5px);
+}
+
+.table-dark th {
+    background: rgba(59, 130, 246, 0.2);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-dark tbody tr:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %} 

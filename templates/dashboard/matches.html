@@ -1,0 +1,324 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Match Analysis - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-futbol text-primary me-3"></i>
+                    Match Analysis
+                </h1>
+                <p class="lead text-secondary">Comprehensive match statistics and performance insights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="metric-value">{{ total_matches }}</div>
+                <div class="metric-label">Total Matches</div>
+                <div class="metric-detail">Tournament Total</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="metric-value">{{ avg_goals_per_match|floatformat:1 }}</div>
+                <div class="metric-label">Avg Goals/Match</div>
+                <div class="metric-detail">Scoring Rate</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="metric-value">{{ highest_scoring_match.goals }}</div>
+                <div class="metric-label">Highest Scoring</div>
+                <div class="metric-detail">{{ highest_scoring_match.teams }}</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">{{ avg_distance|floatformat:1 }}</div>
+                <div class="metric-label">Avg Distance</div>
+                <div class="metric-detail">km per Match</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Distribution Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    <h5 class="mb-0">Match Results Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="resultsChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <h5 class="mb-0">Match Intensity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="intensity-stat">
+                                <div class="intensity-value">{{ high_intensity_matches }}</div>
+                                <div class="intensity-label">High Intensity</div>
+                                <div class="intensity-percentage">
+                                    {% widthratio high_intensity_matches total_matches 100 %}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="intensity-stat">
+                                <div class="intensity-value">{{ low_intensity_matches }}</div>
+                                <div class="intensity-label">Low Intensity</div>
+                                <div class="intensity-percentage">
+                                    {% widthratio low_intensity_matches total_matches 100 %}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notable Matches -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-magic me-2"></i>
+                    <h5 class="mb-0">Notable Matches</h5>
+                </div>
+                <div class="card-body">
+                    <div id="notableMatchesChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crosshairs me-2"></i>
+                    <h5 class="mb-0">Match Highlights</h5>
+                </div>
+                <div class="card-body">
+                    {% for match in notable_matches %}
+                    <div class="highlight-card mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
+                                <br><small class="text-muted">{{ match.date }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ match.score }}</span>
+                                <br><small class="text-muted">{{ match.highlight }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Match Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-table me-2"></i>
+                    <h5 class="mb-0">Detailed Match Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Match</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th>Distance</th>
+                                    <th>Intensity</th>
+                                    <th>Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in match_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
+                                        <br><small class="text-muted">{{ match.stage }}</small>
+                                    </td>
+                                    <td>{{ match.date }}</td>
+                                    <td>{{ match.score }}</td>
+                                    <td>{{ match.goals }}</td>
+                                    <td>{{ match.assists }}</td>
+                                    <td>{{ match.total_distance|floatformat:1 }} km</td>
+                                    <td>{{ match.intensity_rating|floatformat:1 }}</td>
+                                    <td>{{ match.match_impact|floatformat:1 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Results Chart
+    {% if results_chart %}
+    var resultsData = {{ results_chart|safe }};
+    Plotly.newPlot('resultsChart', resultsData.data, resultsData.layout, {responsive: true});
+    {% endif %}
+    
+    // Notable Matches Chart
+    {% if notable_matches_chart %}
+    var notableMatchesData = {{ notable_matches_chart|safe }};
+    Plotly.newPlot('notableMatchesChart', notableMatchesData.data, notableMatchesData.layout, {responsive: true});
+    {% endif %}
+});
+</script>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.metric-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.intensity-stat {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.intensity-stat:hover {
+    background: rgba(59, 130, 246, 0.15);
+    transform: translateY(-3px);
+}
+
+.intensity-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.intensity-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.intensity-percentage {
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+}
+
+.highlight-card {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.highlight-card:hover {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateX(5px);
+}
+
+.table-dark th {
+    background: rgba(59, 130, 246, 0.2);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-dark tbody tr:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %} 

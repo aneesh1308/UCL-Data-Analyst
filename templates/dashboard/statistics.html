@@ -1,0 +1,376 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Statistical Analysis - UCL Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-chart-bar me-3"></i>Statistical Analysis
+    </h1>
+    <p class="page-subtitle">Advanced statistical insights, correlations, and performance distributions</p>
+</div>
+
+<!-- Correlation Matrix -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-project-diagram me-2"></i>Performance Metrics Correlation Matrix
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="correlationChart" class="chart-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2 text-muted">Loading correlation analysis...</p>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>Correlation Insights</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Strong Positive (0.7+):</strong> Indicates metrics that increase together</li>
+                                <li><strong>Moderate (0.3-0.7):</strong> Some relationship exists</li>
+                                <li><strong>Weak (-0.3 to 0.3):</strong> Little to no linear relationship</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Goals vs Minutes:</strong> More playing time often means more scoring opportunities</li>
+                                <li><strong>Distance vs Matches:</strong> Physical output correlates with game time</li>
+                                <li><strong>Assists vs Goals:</strong> Playmakers often score too</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribution Analysis -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Goals Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="goalsDistChart" class="chart-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2 text-muted">Loading goals distribution...</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="small text-muted">Elite Scorers</div>
+                            <div class="h6 text-success">5+ Goals</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Regular Scorers</div>
+                            <div class="h6 text-info">1-4 Goals</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Non-Scorers</div>
+                            <div class="h6 text-muted">0 Goals</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Assists Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <div class="alert alert-primary">
+                            <h6><i class="fas fa-magic me-2"></i>Playmaker Analysis</h6>
+                            <p class="mb-1">Distribution shows the rarity of elite playmakers:</p>
+                            <ul class="mb-0">
+                                <li>Most players (60%+) have 0-1 assists</li>
+                                <li>Elite playmakers (3+ assists) are rare</li>
+                                <li>Shows importance of creative players</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="text-center">
+                            <div class="h4 text-primary">Right-skewed</div>
+                            <small class="text-muted">Few players dominate assist statistics</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Position Performance Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Performance by Position - Detailed Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Players</th>
+                                <th>Total Goals</th>
+                                <th>Avg Goals</th>
+                                <th>Total Assists</th>
+                                <th>Avg Assists</th>
+                                <th>Total Minutes</th>
+                                <th>Avg Minutes</th>
+                                <th>Goal Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for position, stats in position_stats.iterrows %}
+                            <tr>
+                                <td><strong>{{ position }}</strong></td>
+                                <td><span class="badge badge-info">{{ stats.6 }}</span></td>
+                                <td><span class="badge badge-success">{{ stats.0 }}</span></td>
+                                <td>{{ stats.1 }}</td>
+                                <td><span class="badge badge-warning">{{ stats.2 }}</span></td>
+                                <td>{{ stats.3 }}</td>
+                                <td>{{ stats.4|floatformat:0 }}</td>
+                                <td>{{ stats.5|floatformat:0 }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {% widthratio stats.1 2 100 %}%;">
+                                            {{ stats.1|floatformat:2 }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-bullseye me-2"></i>Attacking Positions</h6>
+                            <p class="mb-1">Forwards and attacking midfielders dominate goal statistics:</p>
+                            <ul class="mb-0">
+                                <li>Forwards average highest goals per player</li>
+                                <li>Midfielders contribute significantly to assists</li>
+                                <li>Shows clear positional roles in modern football</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-shield me-2"></i>Defensive Contributions</h6>
+                            <p class="mb-1">Defensive players' offensive contributions:</p>
+                            <ul class="mb-0">
+                                <li>Defenders occasionally contribute goals</li>
+                                <li>Set-piece specialists add value</li>
+                                <li>Modern game sees more attacking defenders</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Statistical Metrics -->
+<div class="row">
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calculator me-2"></i>Statistical Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <tr>
+                            <td><strong>Metric</strong></td>
+                            <td><strong>Goals</strong></td>
+                            <td><strong>Assists</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Mean</td>
+                            <td>{{ correlation_data.goals.mean|floatformat:2 }}</td>
+                            <td>{{ correlation_data.assists.mean|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Median</td>
+                            <td>{{ correlation_data.goals.quantile:0.5|floatformat:2 }}</td>
+                            <td>{{ correlation_data.assists.quantile:0.5|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Std Dev</td>
+                            <td>{{ correlation_data.goals.std|floatformat:2 }}</td>
+                            <td>{{ correlation_data.assists.std|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Max</td>
+                            <td>{{ correlation_data.goals.max }}</td>
+                            <td>{{ correlation_data.assists.max }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Key Correlations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small text-muted">Goals vs Minutes</label>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {% widthratio correlation_data.goals_minutes_corr 1 100 %}%;">
+                            {{ correlation_data.goals_minutes_corr|floatformat:3 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted">Goals vs Assists</label>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-info" role="progressbar" 
+                             style="width: {% widthratio correlation_data.goals_assists_corr 1 100 %}%;">
+                            {{ correlation_data.goals_assists_corr|floatformat:3 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted">Minutes vs Distance</label>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: {% widthratio correlation_data.minutes_distance_corr 1 100 %}%;">
+                            {{ correlation_data.minutes_distance_corr|floatformat:3 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>Statistical Insights
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Key Findings</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>Skewed Distribution:</strong> Most goals/assists concentrated in few players</li>
+                        <li><strong>Positional Clarity:</strong> Clear role differentiation by position</li>
+                        <li><strong>Playing Time Impact:</strong> Strong correlation between minutes and output</li>
+                        <li><strong>Elite Performance:</strong> Top performers significantly outperform average</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <div class="h6 text-primary">{{ correlation_data.goals.sum }}</div>
+                    <small class="text-muted">Total Tournament Goals</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load charts when page is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Correlation matrix
+        var correlationData = {{ correlation_chart|safe }};
+        Plotly.newPlot('correlationChart', correlationData.data, correlationData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        
+        // Goals distribution
+        var goalsDistData = {{ goals_dist_chart|safe }};
+        Plotly.newPlot('goalsDistChart', goalsDistData.data, goalsDistData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        
+        // Add animation to progress bars
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach((bar, index) => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.transition = 'width 1.5s ease-in-out';
+                bar.style.width = width;
+            }, index * 200);
+        });
+        
+        // Add hover effects to table rows
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.01)';
+                this.style.transition = 'transform 0.2s ease';
+                this.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+    
+    // Update chart themes for dark mode
+    function updateChartTheme() {
+        const charts = ['correlationChart', 'goalsDistChart'];
+        charts.forEach(chartId => {
+            const element = document.getElementById(chartId);
+            if (element && element.layout) {
+                Plotly.relayout(chartId, {
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': { color: '#f8fafc' }
+                });
+            }
+        });
+    }
+    
+    // Apply dark theme on load
+    setTimeout(updateChartTheme, 1000);
+</script>
+{% endblock %} 

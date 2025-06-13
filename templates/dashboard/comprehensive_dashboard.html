@@ -1,0 +1,865 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}Comprehensive Analytics Dashboard - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-header">
+                <h1 class="display-4">
+                    <i class="fas fa-chart-line text-primary me-3"></i>
+                    Comprehensive Analytics Dashboard
+                </h1>
+                <p class="lead text-secondary">Complete UEFA Champions League 2021-22 Analysis with AI Insights</p>
+                <div class="header-stats">
+                    <span class="stat-item">
+                        <i class="fas fa-users text-info"></i>
+                        {{ total_players }} Players
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-shield-alt text-success"></i>
+                        {{ total_teams }} Teams
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-futbol text-warning"></i>
+                        {{ total_goals }} Goals
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-hands-helping text-danger"></i>
+                        {{ total_assists }} Assists
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row mb-5">
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.total_matches_played }}</div>
+                <div class="kpi-label">Total Matches</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.total_minutes|floatformat:0 }}</div>
+                <div class="kpi-label">Total Minutes</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-running"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.total_distance|floatformat:0 }}km</div>
+                <div class="kpi-label">Distance Covered</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.avg_goals_per_player|floatformat:1 }}</div>
+                <div class="kpi-label">Avg Goals/Player</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.avg_assists_per_player|floatformat:1 }}</div>
+                <div class="kpi-label">Avg Assists/Player</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="kpi-card">
+                <div class="kpi-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="kpi-value">{{ statistical_insights.goals_per_minute|floatformat:3 }}</div>
+                <div class="kpi-label">Goals/90min</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Analysis Section -->
+    <div class="row mb-5">
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Performance Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceDistChart" width="400" height="300"></canvas>
+                    <div class="chart-summary mt-3">
+                        {% for category, count in performance_distribution.items %}
+                        <div class="summary-item">
+                            <span class="category">{{ category }}:</span>
+                            <span class="count">{{ count }} players</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users me-2"></i>Age Group Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ageGroupsChart" width="400" height="300"></canvas>
+                    <div class="chart-summary mt-3">
+                        {% for group, count in age_groups.items %}
+                        <div class="summary-item">
+                            <span class="category">{{ group }}:</span>
+                            <span class="count">{{ count }} players</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-map-marker-alt me-2"></i>Position Effectiveness</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="positionEffectivenessChart" width="400" height="300"></canvas>
+                    <div class="position-stats mt-3">
+                        {% for position, stats in position_effectiveness.items %}
+                        <div class="position-item">
+                            <strong>{{ position }}</strong>
+                            <div class="position-details">
+                                <small>{{ stats.total_players }} players | {{ stats.effectiveness_score|floatformat:1 }} effectiveness</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Analytics Section -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-robot me-2"></i>AI Player Clustering</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="aiClustersChart" width="400" height="300"></canvas>
+                    <div class="cluster-insights mt-3">
+                        {% for cluster, count in player_clusters.items %}
+                        <div class="cluster-item">
+                            <div class="cluster-badge">{{ count }}</div>
+                            <div class="cluster-info">
+                                <strong>{{ cluster }}</strong>
+                                <small>{{ count|mul:100|div:total_players|floatformat:1 }}% of players</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Injury Risk Assessment</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="injuryRiskChart" width="400" height="300"></canvas>
+                    <div class="risk-breakdown mt-3">
+                        {% for risk, count in injury_risk_stats.items %}
+                        <div class="risk-item risk-{{ risk|lower }}">
+                            <span class="risk-label">{{ risk }} Risk:</span>
+                            <span class="risk-count">{{ count }} players</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-medal me-2"></i>Top Performers by Category</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 mb-4">
+                            <h6 class="category-title">🥅 Goal Scorers</h6>
+                            {% for player in top_categories.goal_scorers %}
+                            <div class="performer-item">
+                                <strong>{{ player.player_name }}</strong>
+                                <div class="performer-stats">
+                                    <span class="badge bg-danger">{{ player.goals }} goals</span>
+                                    <small class="text-muted d-block">{{ player.club }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-4">
+                            <h6 class="category-title">🎯 Assist Leaders</h6>
+                            {% for player in top_categories.assist_leaders %}
+                            <div class="performer-item">
+                                <strong>{{ player.player_name }}</strong>
+                                <div class="performer-stats">
+                                    <span class="badge bg-success">{{ player.assists }} assists</span>
+                                    <small class="text-muted d-block">{{ player.club }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-4">
+                            <h6 class="category-title">🏃 Distance Runners</h6>
+                            {% for player in top_categories.distance_runners %}
+                            <div class="performer-item">
+                                <strong>{{ player.player_name }}</strong>
+                                <div class="performer-stats">
+                                    <span class="badge bg-info">{{ player.distance_covered|floatformat:1 }}km</span>
+                                    <small class="text-muted d-block">{{ player.club }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-4">
+                            <h6 class="category-title">💰 Most Valuable</h6>
+                            {% for player in top_categories.most_valuable %}
+                            <div class="performer-item">
+                                <strong>{{ player.player_name }}</strong>
+                                <div class="performer-stats">
+                                    <span class="badge bg-warning">${{ player.estimated_value|floatformat:1 }}M</span>
+                                    <small class="text-muted d-block">{{ player.club }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-4">
+                            <h6 class="category-title">⭐ Best Performers</h6>
+                            {% for player in top_categories.best_performers %}
+                            <div class="performer-item">
+                                <strong>{{ player.player_name }}</strong>
+                                <div class="performer-stats">
+                                    <span class="badge bg-primary">{{ player.performance_rating|floatformat:1 }}</span>
+                                    <small class="text-muted d-block">{{ player.club }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Comparison Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Team Excellence Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 mb-3">
+                            <div class="team-excellence-card">
+                                <div class="excellence-icon">🥅</div>
+                                <div class="excellence-title">Most Goals</div>
+                                <div class="excellence-team">{{ team_comparison.most_goals.club }}</div>
+                                <div class="excellence-stat">{{ team_comparison.most_goals.goals }} goals</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-3">
+                            <div class="team-excellence-card">
+                                <div class="excellence-icon">🎯</div>
+                                <div class="excellence-title">Most Assists</div>
+                                <div class="excellence-team">{{ team_comparison.most_assists.club }}</div>
+                                <div class="excellence-stat">{{ team_comparison.most_assists.assists }} assists</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-3">
+                            <div class="team-excellence-card">
+                                <div class="excellence-icon">🛡️</div>
+                                <div class="excellence-title">Best Defense</div>
+                                <div class="excellence-team">{{ team_comparison.best_defense.club }}</div>
+                                <div class="excellence-stat">{{ team_comparison.best_defense.goals_against }} conceded</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-3">
+                            <div class="team-excellence-card">
+                                <div class="excellence-icon">⚽</div>
+                                <div class="excellence-title">Ball Control</div>
+                                <div class="excellence-team">{{ team_comparison.highest_possession.club }}</div>
+                                <div class="excellence-stat">{{ team_comparison.highest_possession.possession|floatformat:1 }}% possession</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 mb-3">
+                            <div class="team-excellence-card">
+                                <div class="excellence-icon">🟨</div>
+                                <div class="excellence-title">Most Disciplined</div>
+                                <div class="excellence-team">{{ team_comparison.most_disciplined.club }}</div>
+                                <div class="excellence-stat">{{ team_comparison.most_disciplined.yellow_cards|add:team_comparison.most_disciplined.red_cards }} cards</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Analysis Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-scatter me-2"></i>Goals vs Assists Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="goalsAssistsScatter" width="400" height="300"></canvas>
+                    <div class="scatter-insights mt-3">
+                        <div class="insight-item">
+                            <i class="fas fa-lightbulb text-warning"></i>
+                            <span>Players in the top-right quadrant are the most complete attackers</span>
+                        </div>
+                        <div class="insight-item">
+                            <i class="fas fa-chart-line text-info"></i>
+                            <span>Correlation between goals and assists indicates team play effectiveness</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-gem me-2"></i>Market Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="market-stat">
+                        <div class="market-value">${{ market_analysis.total_market_value|floatformat:0 }}M</div>
+                        <div class="market-label">Total Market Value</div>
+                    </div>
+                    
+                    <div class="market-stat">
+                        <div class="market-value">${{ market_analysis.avg_market_value|floatformat:1 }}M</div>
+                        <div class="market-label">Average Player Value</div>
+                    </div>
+                    
+                    <div class="most-valuable mt-3">
+                        <h6>Most Valuable Player</h6>
+                        <div class="valuable-player">
+                            <strong>{{ market_analysis.most_valuable.player_name }}</strong>
+                            <div class="valuable-details">
+                                <span class="badge bg-success">${{ market_analysis.most_valuable.estimated_value|floatformat:1 }}M</span>
+                                <small class="text-muted d-block">{{ market_analysis.most_valuable.club }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="undervalued-gems mt-3">
+                        <h6>Undervalued Gems ({{ market_analysis.undervalued_gems|length }})</h6>
+                        {% for player in market_analysis.undervalued_gems|slice:":3" %}
+                        <div class="gem-item">
+                            <strong>{{ player.player_name }}</strong>
+                            <div class="gem-stats">
+                                <span class="badge bg-info">${{ player.estimated_value|floatformat:1 }}M</span>
+                                <span class="badge bg-warning">{{ player.performance_rating|floatformat:1 }} rating</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictive Analytics Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-crystal-ball me-2"></i>AI Predictions & Future Prospects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Club</th>
+                                    <th>Position</th>
+                                    <th>Current Performance</th>
+                                    <th>Predicted Score</th>
+                                    <th>Growth Potential</th>
+                                    <th>Market Value</th>
+                                    <th>Injury Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in top_prospects|slice:":15" %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ player.player_name }}</strong>
+                                        <br><small class="text-muted">{{ player.nationality }}</small>
+                                    </td>
+                                    <td>{{ player.club }}</td>
+                                    <td>{{ player.position }}</td>
+                                    <td>{{ player.goal_contribution }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ player.predicted_performance|floatformat:1 }}</span>
+                                    </td>
+                                    <td>
+                                        {% if player.predicted_performance > player.goal_contribution %}
+                                        <span class="text-success">
+                                            <i class="fas fa-arrow-up"></i> High
+                                        </span>
+                                        {% else %}
+                                        <span class="text-warning">
+                                            <i class="fas fa-minus"></i> Stable
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ player.estimated_value|floatformat:1 }}M</td>
+                                    <td>
+                                        <span class="badge bg-{% if player.injury_risk == 'Low' %}success{% elif player.injury_risk == 'Medium' %}warning{% elif player.injury_risk == 'High' %}danger{% else %}dark{% endif %}">
+                                            {{ player.injury_risk }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js default configuration
+    Chart.defaults.color = '#ffffff';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+    
+    // Performance Distribution Chart
+    {% if performance_dist_chart %}
+    var perfDistData = {{ performance_dist_chart|safe }};
+    var perfDistCtx = document.getElementById('performanceDistChart').getContext('2d');
+    new Chart(perfDistCtx, {
+        type: 'doughnut',
+        data: perfDistData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Age Groups Chart
+    {% if age_groups_chart %}
+    var ageGroupsData = {{ age_groups_chart|safe }};
+    var ageGroupsCtx = document.getElementById('ageGroupsChart').getContext('2d');
+    new Chart(ageGroupsCtx, {
+        type: 'pie',
+        data: ageGroupsData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Position Effectiveness Chart
+    {% if position_effectiveness_chart %}
+    var posEffData = {{ position_effectiveness_chart|safe }};
+    var posEffCtx = document.getElementById('positionEffectivenessChart').getContext('2d');
+    new Chart(posEffCtx, {
+        type: 'bar',
+        data: posEffData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#ffffff', maxRotation: 45 },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // AI Clusters Chart
+    {% if clusters_chart %}
+    var clustersData = {{ clusters_chart|safe }};
+    var clustersCtx = document.getElementById('aiClustersChart').getContext('2d');
+    new Chart(clustersCtx, {
+        type: 'doughnut',
+        data: clustersData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Injury Risk Chart
+    {% if injury_chart %}
+    var injuryData = {{ injury_chart|safe }};
+    var injuryCtx = document.getElementById('injuryRiskChart').getContext('2d');
+    new Chart(injuryCtx, {
+        type: 'doughnut',
+        data: injuryData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Goals vs Assists Scatter
+    {% if goals_assists_scatter %}
+    var scatterData = {{ goals_assists_scatter|safe }};
+    var scatterCtx = document.getElementById('goalsAssistsScatter').getContext('2d');
+    new Chart(scatterCtx, {
+        type: 'scatter',
+        data: scatterData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Goals',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Assists',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<style>
+.dashboard-header {
+    background: var(--gradient-2);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.header-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.kpi-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.kpi-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.analytics-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.analytics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-card .card-header {
+    background: rgba(59, 130, 246, 0.2);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.analytics-card .card-body {
+    padding: 1.5rem;
+}
+
+.chart-summary, .cluster-insights, .risk-breakdown {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.summary-item, .cluster-item, .risk-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cluster-item {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.cluster-badge {
+    background: var(--gradient-1);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.position-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.position-details {
+    margin-top: 0.25rem;
+}
+
+.category-title {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.performer-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.performer-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.performer-stats {
+    margin-top: 0.5rem;
+}
+
+.team-excellence-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.team-excellence-card:hover {
+    transform: scale(1.05);
+}
+
+.excellence-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.excellence-title {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.excellence-team {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.excellence-stat {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+}
+
+.market-stat {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.market-value {
+    font-size: 2rem;
+    font-weight: bold;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.market-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.valuable-player, .gem-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.gem-stats {
+    margin-top: 0.5rem;
+}
+
+.gem-stats .badge {
+    margin-right: 0.5rem;
+}
+
+.scatter-insights {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.risk-low { border-left: 4px solid #4ECDC4; }
+.risk-medium { border-left: 4px solid #FFEAA7; }
+.risk-high { border-left: 4px solid #FF6B6B; }
+.risk-critical { border-left: 4px solid #E17055; }
+</style>
+{% endblock %} 

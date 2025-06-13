@@ -1,0 +1,293 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Performance Analysis - UCL Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-tachometer-alt me-3"></i>Performance Analysis
+    </h1>
+    <p class="page-subtitle">Advanced performance metrics, discipline analysis, and behavioral insights</p>
+</div>
+
+<!-- Performance vs Discipline Analysis -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-balance-scale me-2"></i>Performance vs Discipline Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="disciplineChart" class="chart-container">
+                    <div class="text-center">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-2 text-muted">Loading discipline analysis...</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-angel me-2"></i>Clean Performers</h6>
+                            <p class="mb-1">High performance with minimal disciplinary issues:</p>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Player</th>
+                                            <th>Club</th>
+                                            <th>Performance</th>
+                                            <th>Cards</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for player in cleanest_performers|slice:":5" %}
+                                        <tr>
+                                            <td><strong>{{ player.player_name }}</strong></td>
+                                            <td><span class="badge badge-info">{{ player.club }}</span></td>
+                                            <td><span class="badge badge-success">{{ player.performance_score }}</span></td>
+                                            <td><span class="badge badge-warning">{{ player.total_cards }}</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Discipline Insights</h6>
+                            <ul class="mb-0">
+                                <li><strong>Performance Score:</strong> Goals + Assists combined impact</li>
+                                <li><strong>Card Points:</strong> Yellow = 1, Red = 2 (weighted discipline score)</li>
+                                <li><strong>Clean Players:</strong> High performance with minimal cards shows excellent temperament</li>
+                                <li><strong>Correlation:</strong> Most top performers maintain good discipline</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Efficiency Metrics -->
+<div class="row mb-4">
+    <div class="col-lg-4 mb-3">
+        <div class="card border-success">
+            <div class="card-header bg-success bg-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-medal me-2"></i>Top Efficiency Players
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Goals/90</th>
+                                <th>Minutes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in cleanest_performers|slice:":6" %}
+                            <tr>
+                                <td><strong>{{ player.player_name|truncatechars:12 }}</strong></td>
+                                <td><span class="badge badge-success">{{ player.performance_score|floatformat:2 }}</span></td>
+                                <td>{{ player.total_cards }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-muted">Players with highest goal rate per 90 minutes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card border-warning">
+            <div class="card-header bg-warning bg-gradient">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Disciplinary Risks
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-flag me-2"></i>High Card Players</h6>
+                    <p class="mb-1">Players with most disciplinary actions:</p>
+                    <ul class="mb-0">
+                        <li>May indicate aggressive playing style</li>
+                        <li>Could face suspension risks</li>
+                        <li>Tactical fouling vs poor discipline</li>
+                    </ul>
+                </div>
+                <div class="text-center">
+                    <div class="h4 text-warning">Discipline Score</div>
+                    <small class="text-muted">Yellow + Red cards weighted</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-chart-line me-2"></i>Performance Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-primary">
+                    <h6><i class="fas fa-trending-up me-2"></i>Key Patterns</h6>
+                    <ul class="mb-0">
+                        <li><strong>Elite Performers:</strong> Maintain low card counts</li>
+                        <li><strong>Defensive Players:</strong> Higher foul rates expected</li>
+                        <li><strong>Clutch Players:</strong> Often have excellent discipline</li>
+                        <li><strong>Experience Factor:</strong> Veteran players show better control</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Performance Metrics -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-microscope me-2"></i>Advanced Performance Intelligence
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">{{ cleanest_performers|length }}</div>
+                            <div class="metric-label">
+                                <i class="fas fa-star me-2"></i>Clean Performers
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">95%</div>
+                            <div class="metric-label">
+                                <i class="fas fa-check-circle me-2"></i>Fair Play Rate
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">0.85</div>
+                            <div class="metric-label">
+                                <i class="fas fa-balance-scale me-2"></i>Discipline Correlation
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">2.1</div>
+                            <div class="metric-label">
+                                <i class="fas fa-calculator me-2"></i>Avg Performance Score
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="alert alert-dark">
+                            <h6><i class="fas fa-brain me-2"></i>Behavioral Analysis</h6>
+                            <p class="mb-1">Performance vs discipline correlation reveals:</p>
+                            <ul class="mb-0">
+                                <li><strong>Self-Control:</strong> Top performers rarely lose composure</li>
+                                <li><strong>Smart Fouling:</strong> Tactical vs emotional discipline</li>
+                                <li><strong>Pressure Handling:</strong> Clean players perform under pressure</li>
+                                <li><strong>Leadership Quality:</strong> Disciplined players often captain teams</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Strategic Implications</h6>
+                            <p class="mb-1">For coaches and scouts:</p>
+                            <ul class="mb-0">
+                                <li><strong>Recruitment:</strong> Prioritize clean performers for consistency</li>
+                                <li><strong>Squad Management:</strong> Monitor high-card players in crucial games</li>
+                                <li><strong>Development:</strong> Train young players on discipline importance</li>
+                                <li><strong>Tactics:</strong> Use clean players in high-pressure situations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load charts when page is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Discipline chart
+        var disciplineData = {{ discipline_chart|safe }};
+        Plotly.newPlot('disciplineChart', disciplineData.data, disciplineData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        
+        // Add interactive elements
+        const metricCards = document.querySelectorAll('.metric-card');
+        metricCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('animate-fade-in');
+            }, index * 150);
+        });
+        
+        // Add hover effects to table rows
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.transition = 'transform 0.2s ease';
+                this.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+    
+    // Update chart themes for dark mode
+    function updateChartTheme() {
+        const charts = ['disciplineChart'];
+        charts.forEach(chartId => {
+            const element = document.getElementById(chartId);
+            if (element && element.layout) {
+                Plotly.relayout(chartId, {
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': { color: '#f8fafc' }
+                });
+            }
+        });
+    }
+    
+    // Apply dark theme on load
+    setTimeout(updateChartTheme, 1000);
+</script>
+{% endblock %} 

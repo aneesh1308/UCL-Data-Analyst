@@ -1,0 +1,388 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Advanced Insights - UCL Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-lightbulb me-3"></i>Advanced Insights
+    </h1>
+    <p class="page-subtitle">Predictive analytics, player intelligence, and tactical insights beyond basic statistics</p>
+</div>
+
+<!-- Key Insights Cards -->
+<div class="row mb-4">
+    <div class="col-lg-4 mb-3">
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-star me-2"></i>Most Versatile Players
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Club</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in versatile_players|slice:":8" %}
+                            <tr>
+                                <td><strong>{{ player.player_name }}</strong></td>
+                                <td><span class="badge badge-info">{{ player.club }}</span></td>
+                                <td><span class="badge badge-success">{{ player.versatility_score }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <small><i class="fas fa-info-circle me-1"></i>Versatility combines goals, assists, and work rate into a single performance metric.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card border-danger">
+            <div class="card-header bg-danger bg-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-fire me-2"></i>Clutch Performers
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Club</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in clutch_players|slice:":8" %}
+                            <tr>
+                                <td><strong>{{ player.player_name }}</strong></td>
+                                <td><span class="badge badge-info">{{ player.club }}</span></td>
+                                <td><span class="badge badge-danger">{{ player.clutch_score }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <small><i class="fas fa-bolt me-1"></i>Clutch score measures high impact performance with limited playing time.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-3">
+        <div class="card border-success">
+            <div class="card-header bg-success bg-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-users me-2"></i>Team Chemistry Leaders
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>Chemistry %</th>
+                                <th>Goals</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in team_chemistry_leaders %}
+                            <tr>
+                                <td><strong>{{ team.name }}</strong></td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 60px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {% widthratio team.team_chemistry 200 100 %}%;">
+                                            {{ team.team_chemistry }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">{{ team.goals }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-success mt-3">
+                    <small><i class="fas fa-handshake me-1"></i>Chemistry = (Assists/Goals × 100) shows teamwork emphasis.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Analytics Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Performance Intelligence Dashboard
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">{{ insights.total_tournament_stats.total_players }}</div>
+                            <div class="metric-label">
+                                <i class="fas fa-users me-2"></i>Players Analyzed
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">{{ insights.versatile_players|length }}</div>
+                            <div class="metric-label">
+                                <i class="fas fa-star me-2"></i>Versatile Players
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">{{ insights.clutch_players|length }}</div>
+                            <div class="metric-label">
+                                <i class="fas fa-fire me-2"></i>Clutch Performers
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="metric-card bg-gradient">
+                            <div class="metric-value">{{ insights.team_stats|length }}</div>
+                            <div class="metric-label">
+                                <i class="fas fa-shield-alt me-2"></i>Teams Analyzed
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analysis Sections -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>Player Intelligence Analysis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-primary">
+                    <h6><i class="fas fa-star me-2"></i>Versatility Insights</h6>
+                    <ul class="mb-2">
+                        {% for player in versatile_players|slice:":3" %}
+                        <li><strong>{{ player.player_name }}</strong> ({{ player.club }}): {{ player.goals }}G + {{ player.assists }}A with {{ player.distance_covered|floatformat:1 }}km covered</li>
+                        {% endfor %}
+                    </ul>
+                    <small class="text-muted">These players excel in multiple aspects: scoring, creating, and physical contribution.</small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-bolt me-2"></i>Clutch Performance</h6>
+                    <p class="mb-1">Players who maximize impact with limited minutes:</p>
+                    <ul class="mb-2">
+                        {% for player in clutch_players|slice:":3" %}
+                        <li><strong>{{ player.player_name }}</strong>: {{ player.goal_contribution }} contributions in {{ player.minutes_played }} minutes</li>
+                        {% endfor %}
+                    </ul>
+                    <small class="text-muted">High efficiency despite lower playing time indicates super-sub potential.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tactics me-2"></i>Tactical Intelligence
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-handshake me-2"></i>Team Chemistry Analysis</h6>
+                    <p class="mb-1">Teams with highest chemistry ratings suggest coordinated attacking play:</p>
+                    <ul class="mb-2">
+                        {% for team in team_chemistry_leaders|slice:":3" %}
+                        <li><strong>{{ team.name }}</strong>: {{ team.team_chemistry }}% chemistry ({{ team.assists }} assists for {{ team.goals }} goals)</li>
+                        {% endfor %}
+                    </ul>
+                    <small class="text-muted">Higher chemistry indicates more collaborative goal-scoring approach.</small>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-chart-pie me-2"></i>Position Dominance</h6>
+                    <p class="mb-1">{{ insights.total_tournament_stats.most_competitive_position }} is the most represented position, indicating:</p>
+                    <ul class="mb-0">
+                        <li>High tactical importance in modern football</li>
+                        <li>Greater squad depth requirements</li>
+                        <li>Tactical flexibility demands</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Predictive Insights -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-crystal-ball me-2"></i>Predictive Insights & Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-4 mb-3">
+                        <div class="alert alert-primary">
+                            <h6><i class="fas fa-trending-up me-2"></i>Rising Stars</h6>
+                            <p class="mb-1">Clutch performers with high versatility scores are likely to become key players:</p>
+                            <ul class="mb-0">
+                                {% for player in clutch_players|slice:":2" %}
+                                    {% if player.versatility_score > 10 %}
+                                    <li><strong>{{ player.player_name }}</strong> - High impact in limited time</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 mb-3">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-balance-scale me-2"></i>Team Balance</h6>
+                            <p class="mb-1">Teams with optimal chemistry balance (60-80%) tend to perform consistently:</p>
+                            <ul class="mb-0">
+                                {% for team in team_chemistry_leaders %}
+                                    {% if team.team_chemistry >= 60 and team.team_chemistry <= 80 %}
+                                    <li><strong>{{ team.name }}</strong> - Balanced approach</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 mb-3">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-medal me-2"></i>Success Patterns</h6>
+                            <p class="mb-1">Successful teams combine:</p>
+                            <ul class="mb-0">
+                                <li>High versatility players ({{ versatile_players.0.player_name }} type)</li>
+                                <li>Clutch performers for key moments</li>
+                                <li>Balanced team chemistry (not too high/low)</li>
+                                <li>Strong {{ insights.total_tournament_stats.most_competitive_position }} position depth</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="alert alert-dark">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Strategic Recommendations</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">For Scouts:</h6>
+                                    <ul class="mb-0">
+                                        <li>Monitor clutch performers with versatility scores > 15</li>
+                                        <li>Look for players with high goals/90 minutes ratios</li>
+                                        <li>Consider {{ insights.total_tournament_stats.most_competitive_position }} position players for squad depth</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-success">For Coaches:</h6>
+                                    <ul class="mb-0">
+                                        <li>Utilize clutch performers in high-pressure situations</li>
+                                        <li>Balance team chemistry - avoid over-reliance on individual brilliance</li>
+                                        <li>Develop versatile players for tactical flexibility</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add interactive elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover effects to insight cards
+        const insightCards = document.querySelectorAll('.alert');
+        insightCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.transition = 'transform 0.3s ease';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+        
+        // Add animation to metric cards
+        const metricCards = document.querySelectorAll('.metric-card');
+        metricCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 150);
+        });
+        
+        // Add progress bar animations
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.transition = 'width 1.5s ease-in-out';
+                bar.style.width = width;
+            }, 500);
+        });
+    });
+    
+    // Interactive tooltips for badges
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+        
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+</script>
+{% endblock %} 

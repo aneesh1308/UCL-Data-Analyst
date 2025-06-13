@@ -1,0 +1,519 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Overview - UEFA Champions League 2021-22 Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-card">
+                <h1 class="display-4 text-center mb-3">
+                    <i class="fas fa-trophy text-warning me-3"></i>
+                    UEFA Champions League 2021-22
+                </h1>
+                <p class="lead text-center text-secondary">
+                    Advanced Analytics Dashboard with Machine Learning Insights
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-value">{{ tournament_stats.total_players }}</div>
+                <div class="metric-label">Total Players</div>
+                <div class="metric-change">+{{ tournament_stats.total_teams }} Teams</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-futbol"></i>
+                </div>
+                <div class="metric-value">{{ tournament_stats.total_goals }}</div>
+                <div class="metric-label">Total Goals</div>
+                <div class="metric-change">{{ tournament_stats.avg_goals_per_team }}/team avg</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-hands-helping"></i>
+                </div>
+                <div class="metric-value">{{ tournament_stats.total_assists }}</div>
+                <div class="metric-label">Total Assists</div>
+                <div class="metric-change">{{ tournament_stats.avg_impact_rating }} Impact Rating</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">${{ tournament_stats.total_estimated_value|floatformat:0|cut:"." }}M</div>
+                <div class="metric-label">Market Value</div>
+                <div class="metric-change">AI Estimated</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers Section -->
+    <div class="row mb-5">
+        <div class="col-lg-4 mb-4">
+            <div class="card achievement-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crown text-warning me-2"></i>
+                    <h5 class="mb-0">Golden Boot Winner</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="player-avatar mb-3">
+                        <i class="fas fa-user-circle fa-4x text-primary"></i>
+                    </div>
+                    <h4 class="text-primary">{{ top_scorer.player_name }}</h4>
+                    <p class="text-secondary">{{ top_scorer.club }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">{{ top_scorer.goals }}</div>
+                                <div class="stat-label">Goals</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">{{ top_scorer.assists }}</div>
+                                <div class="stat-label">Assists</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card achievement-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-magic text-success me-2"></i>
+                    <h5 class="mb-0">Top Playmaker</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="player-avatar mb-3">
+                        <i class="fas fa-user-circle fa-4x text-success"></i>
+                    </div>
+                    <h4 class="text-success">{{ top_assister.player_name }}</h4>
+                    <p class="text-secondary">{{ top_assister.club }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">{{ top_assister.assists }}</div>
+                                <div class="stat-label">Assists</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">{{ top_assister.goals }}</div>
+                                <div class="stat-label">Goals</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card achievement-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-star text-info me-2"></i>
+                    <h5 class="mb-0">Highest Impact</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="player-avatar mb-3">
+                        <i class="fas fa-user-circle fa-4x text-info"></i>
+                    </div>
+                    <h4 class="text-info">{{ top_impact.player_name }}</h4>
+                    <p class="text-secondary">{{ top_impact.club }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">{{ top_impact.impact_rating|floatformat:1 }}</div>
+                                <div class="stat-label">Impact</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <div class="stat-number">${{ top_impact.estimated_value|floatformat:0|cut:"."|slice:":2" }}M</div>
+                                <div class="stat-label">Value</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics Section -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    <h5 class="mb-0">Goals by Position</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="positionChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    <h5 class="mb-0">Top Teams Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="teamsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Machine Learning Insights -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-brain me-2"></i>
+                    <h5 class="mb-0">AI-Powered Player Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for cluster, count in player_clusters.items %}
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="cluster-card">
+                                <div class="cluster-count">{{ count }}</div>
+                                <div class="cluster-label">{{ cluster }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Analytics -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <h5 class="mb-0">Tournament Goals Progression</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <h5 class="mb-0">Injury Risk Assessment</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="injuryChart" width="400" height="300"></canvas>
+                    <div class="mt-3">
+                        {% for risk, count in injury_risk_breakdown.items %}
+                        <div class="risk-item d-flex justify-content-between">
+                            <span class="risk-label 
+                                {% if risk == 'Low' %}text-success
+                                {% elif risk == 'Medium' %}text-warning
+                                {% elif risk == 'High' %}text-danger
+                                {% else %}text-purple{% endif %}">
+                                {{ risk }} Risk
+                            </span>
+                            <span class="risk-count">{{ count }} players</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Navigation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{% url 'dashboard:players' %}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-users me-2"></i>Player Analysis
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{% url 'dashboard:teams' %}" class="btn btn-success btn-lg w-100">
+                                <i class="fas fa-shield-alt me-2"></i>Team Analysis
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{% url 'dashboard:advanced_analytics' %}" class="btn btn-warning btn-lg w-100">
+                                <i class="fas fa-brain me-2"></i>AI Analytics
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{% url 'dashboard:tactical_analysis' %}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-chess me-2"></i>Tactical Insights
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js default configuration
+    Chart.defaults.color = '#ffffff';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+    
+    // Position Chart (Pie)
+    {% if position_chart %}
+    var positionData = {{ position_chart|safe }};
+    var positionCtx = document.getElementById('positionChart').getContext('2d');
+    new Chart(positionCtx, {
+        type: 'doughnut',
+        data: positionData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Teams Chart (Bar)
+    {% if teams_chart %}
+    var teamsData = {{ teams_chart|safe }};
+    var teamsCtx = document.getElementById('teamsChart').getContext('2d');
+    new Chart(teamsCtx, {
+        type: 'bar',
+        data: teamsData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                        maxRotation: 45
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Trends Chart (Line)
+    {% if trends_chart %}
+    var trendsData = {{ trends_chart|safe }};
+    var trendsCtx = document.getElementById('trendsChart').getContext('2d');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: trendsData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Injury Chart (Doughnut)
+    {% if injury_chart %}
+    var injuryData = {{ injury_chart|safe }};
+    var injuryCtx = document.getElementById('injuryChart').getContext('2d');
+    new Chart(injuryCtx, {
+        type: 'doughnut',
+        data: injuryData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<style>
+.hero-card {
+    background: var(--gradient-2);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.achievement-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.achievement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.player-avatar {
+    padding: 1rem;
+}
+
+.stat-box {
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.cluster-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.cluster-card:hover {
+    transform: scale(1.05);
+}
+
+.cluster-count {
+    font-size: 2rem;
+    font-weight: bold;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.cluster-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.risk-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.risk-item:last-child {
+    border-bottom: none;
+}
+
+.text-purple {
+    color: #8b5cf6 !important;
+}
+
+.metric-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-change {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock %} 

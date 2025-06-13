@@ -1,0 +1,515 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}Advanced Analytics - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-brain text-primary me-3"></i>
+                    AI-Powered Advanced Analytics
+                </h1>
+                <p class="lead text-secondary">Machine Learning insights and predictive analysis</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ML Insights Summary -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="insight-card">
+                <div class="insight-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="insight-number">{{ player_clusters|length }}</div>
+                <div class="insight-label">Player Types Identified</div>
+                <div class="insight-detail">ML Clustering</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="insight-card">
+                <div class="insight-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="insight-number">${{ market_analysis.total_market_value|floatformat:0|cut:"."|slice:":3" }}M</div>
+                <div class="insight-label">Total Market Value</div>
+                <div class="insight-detail">AI Estimated</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="insight-card">
+                <div class="insight-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="insight-number">{{ top_prospects.0.predicted_performance|floatformat:1 }}</div>
+                <div class="insight-label">Top Prospect Score</div>
+                <div class="insight-detail">{{ top_prospects.0.player_name }}</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="insight-card">
+                <div class="insight-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="insight-number">{{ injury_risk_stats.Low|default:0 }}</div>
+                <div class="insight-label">Low Risk Players</div>
+                <div class="insight-detail">Injury Assessment</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Clustering Analysis -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-project-diagram me-2"></i>
+                    <h5 class="mb-0">Player Type Distribution (K-Means Clustering)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for cluster_type, count in player_clusters.items %}
+                        <div class="col-lg-2 col-md-4 col-6 mb-4">
+                            <div class="cluster-card">
+                                <div class="cluster-icon">
+                                    {% if 'Star' in cluster_type %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif 'Goal' in cluster_type %}
+                                        <i class="fas fa-futbol"></i>
+                                    {% elif 'Playmaker' in cluster_type %}
+                                        <i class="fas fa-magic"></i>
+                                    {% elif 'Consistent' in cluster_type %}
+                                        <i class="fas fa-chart-line"></i>
+                                    {% else %}
+                                        <i class="fas fa-users"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="cluster-count">{{ count }}</div>
+                                <div class="cluster-name">{{ cluster_type }}</div>
+                                <div class="cluster-percentage">{{ count|mul:100|div:total_tournament_stats.total_players|floatformat:1 }}%</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <canvas id="playerClustersChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictive Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crystal-ball me-2"></i>
+                    <h5 class="mb-0">Next Season Performance Predictions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Club</th>
+                                    <th>Current Performance</th>
+                                    <th>Predicted Score</th>
+                                    <th>Growth Potential</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in top_prospects|slice:":10" %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ player.player_name }}</strong>
+                                        <br><small class="text-muted">{{ player.position }}</small>
+                                    </td>
+                                    <td>{{ player.club }}</td>
+                                    <td>{{ player.goal_contribution }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ player.predicted_performance|floatformat:1 }}</span>
+                                    </td>
+                                    <td>
+                                        {% if player.predicted_performance > player.goal_contribution %}
+                                        <span class="text-success">
+                                            <i class="fas fa-arrow-up"></i> High
+                                        </span>
+                                        {% else %}
+                                        <span class="text-warning">
+                                            <i class="fas fa-minus"></i> Stable
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <h5 class="mb-0">Injury Risk Matrix</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="injuryRiskChart" width="400" height="300"></canvas>
+                    
+                    <div class="mt-4">
+                        <h6>Risk Factors:</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <span class="badge bg-success me-2">Low</span>
+                                < 60 min/match average
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-warning me-2">Medium</span>
+                                60-80 min/match average
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-danger me-2">High</span>
+                                80-90 min/match average
+                            </li>
+                            <li class="mb-2">
+                                <span class="badge bg-dark me-2">Critical</span>
+                                > 90 min/match average
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Value Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-dollar-sign me-2"></i>
+                    <h5 class="mb-0">Market Value Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="value-stat">
+                                <div class="value-number">${{ market_analysis.total_market_value|floatformat:0|cut:"."|slice:":4" }}M</div>
+                                <div class="value-label">Total Market Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="value-stat">
+                                <div class="value-number">${{ market_analysis.avg_market_value|floatformat:1 }}M</div>
+                                <div class="value-label">Average Player Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="value-stat">
+                                <div class="value-number">{{ market_analysis.most_valuable.player_name }}</div>
+                                <div class="value-label">Most Valuable Player</div>
+                                <div class="value-detail">${{ market_analysis.most_valuable.estimated_value|floatformat:1 }}M</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6>Undervalued Gems (High Performance, Low Market Value):</h6>
+                    <div class="row">
+                        {% for player in market_analysis.undervalued_gems %}
+                        <div class="col-md-6 mb-3">
+                            <div class="gem-card">
+                                <strong>{{ player.player_name }}</strong>
+                                <br><small class="text-muted">{{ player.club }}</small>
+                                <div class="gem-stats">
+                                    <span class="badge bg-success">{{ player.performance_rating|floatformat:1 }} Rating</span>
+                                    <span class="badge bg-info">${{ player.estimated_value|floatformat:1 }}M Value</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-robot me-2"></i>
+                    <h5 class="mb-0">AI Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ai-insight mb-3">
+                        <div class="insight-title">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            Performance Prediction
+                        </div>
+                        <div class="insight-text">
+                            AI models predict {{ top_prospects|length }} players will improve next season based on current trajectory and performance metrics.
+                        </div>
+                    </div>
+                    
+                    <div class="ai-insight mb-3">
+                        <div class="insight-title">
+                            <i class="fas fa-chart-line text-success me-2"></i>
+                            Market Trends
+                        </div>
+                        <div class="insight-text">
+                            {{ market_analysis.undervalued_gems|length }} players identified as undervalued based on performance vs market value analysis.
+                        </div>
+                    </div>
+                    
+                    <div class="ai-insight mb-3">
+                        <div class="insight-title">
+                            <i class="fas fa-shield-alt text-info me-2"></i>
+                            Injury Prevention
+                        </div>
+                        <div class="insight-text">
+                            {{ injury_risk_stats.High|add:injury_risk_stats.Critical }} players flagged for high injury risk requiring load management.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js default configuration
+    Chart.defaults.color = '#ffffff';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+    
+    // Player Clusters Chart
+    {% if clusters_chart %}
+    var clustersData = {{ clusters_chart|safe }};
+    var clustersCtx = document.getElementById('playerClustersChart').getContext('2d');
+    new Chart(clustersCtx, {
+        type: 'doughnut',
+        data: clustersData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Injury Risk Chart
+    {% if injury_chart %}
+    var injuryData = {{ injury_chart|safe }};
+    var injuryCtx = document.getElementById('injuryRiskChart').getContext('2d');
+    new Chart(injuryCtx, {
+        type: 'doughnut',
+        data: injuryData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.insight-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.insight-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.insight-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.insight-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.insight-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.cluster-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.cluster-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.cluster-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.cluster-count {
+    font-size: 2rem;
+    font-weight: bold;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.cluster-name {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-top: 0.5rem;
+}
+
+.cluster-percentage {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.value-stat {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.value-stat:hover {
+    transform: translateY(-3px);
+}
+
+.value-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.value-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.value-detail {
+    font-size: 0.7rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.gem-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.gem-card:hover {
+    transform: translateX(5px);
+}
+
+.gem-stats {
+    margin-top: 0.5rem;
+}
+
+.gem-stats .badge {
+    margin-right: 0.5rem;
+}
+
+.ai-insight {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.ai-insight:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.insight-title {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.insight-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+</style>
+{% endblock %} 

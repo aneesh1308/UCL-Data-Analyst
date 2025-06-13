@@ -1,0 +1,351 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Overview - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-trophy text-primary me-3"></i>
+                    UEFA Champions League 2021-22
+                </h1>
+                <p class="lead text-secondary">Comprehensive analysis of the tournament's key statistics and insights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-futbol"></i>
+                </div>
+                <div class="metric-value">{{ total_matches }}</div>
+                <div class="metric-label">Total Matches</div>
+                <div class="metric-detail">Tournament Total</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-value">{{ total_teams }}</div>
+                <div class="metric-label">Total Teams</div>
+                <div class="metric-detail">Tournament Participants</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="metric-value">{{ total_goals }}</div>
+                <div class="metric-label">Total Goals</div>
+                <div class="metric-detail">{{ avg_goals_per_match|floatformat:1 }} per match</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">{{ total_distance|floatformat:0 }}</div>
+                <div class="metric-label">Total Distance</div>
+                <div class="metric-detail">{{ avg_distance|floatformat:1 }} km per match</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tournament Overview -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    <h5 class="mb-0">Tournament Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="distributionChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    <h5 class="mb-0">Tournament Highlights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for highlight in tournament_highlights %}
+                        <div class="col-6 mb-3">
+                            <div class="highlight-stat">
+                                <div class="highlight-value">{{ highlight.value }}</div>
+                                <div class="highlight-label">{{ highlight.label }}</div>
+                                <div class="highlight-detail">
+                                    {{ highlight.detail }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-magic me-2"></i>
+                    <h5 class="mb-0">Key Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div id="insightsChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-crosshairs me-2"></i>
+                    <h5 class="mb-0">Notable Achievements</h5>
+                </div>
+                <div class="card-body">
+                    {% for achievement in notable_achievements %}
+                    <div class="achievement-card mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ achievement.title }}</strong>
+                                <br><small class="text-muted">{{ achievement.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ achievement.impact }}</span>
+                                <br><small class="text-muted">Impact</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-link me-2"></i>
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <a href="{% url 'dashboard:matches' %}" class="quick-link-card">
+                                <div class="quick-link-icon">
+                                    <i class="fas fa-futbol"></i>
+                                </div>
+                                <div class="quick-link-title">Match Analysis</div>
+                                <div class="quick-link-desc">Detailed match statistics and insights</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <a href="{% url 'dashboard:tactics' %}" class="quick-link-card">
+                                <div class="quick-link-icon">
+                                    <i class="fas fa-chess"></i>
+                                </div>
+                                <div class="quick-link-title">Tactical Analysis</div>
+                                <div class="quick-link-desc">Formation and strategy insights</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <a href="{% url 'dashboard:players' %}" class="quick-link-card">
+                                <div class="quick-link-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="quick-link-title">Player Analysis</div>
+                                <div class="quick-link-desc">Individual player statistics</div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <a href="{% url 'dashboard:teams' %}" class="quick-link-card">
+                                <div class="quick-link-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="quick-link-title">Team Analysis</div>
+                                <div class="quick-link-desc">Team performance metrics</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Distribution Chart
+    {% if distribution_chart %}
+    var distributionData = {{ distribution_chart|safe }};
+    Plotly.newPlot('distributionChart', distributionData.data, distributionData.layout, {responsive: true});
+    {% endif %}
+    
+    // Insights Chart
+    {% if insights_chart %}
+    var insightsData = {{ insights_chart|safe }};
+    Plotly.newPlot('insightsChart', insightsData.data, insightsData.layout, {responsive: true});
+    {% endif %}
+});
+</script>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.metric-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.highlight-stat {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.highlight-stat:hover {
+    background: rgba(59, 130, 246, 0.15);
+    transform: translateY(-3px);
+}
+
+.highlight-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.highlight-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.highlight-detail {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.achievement-card {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.achievement-card:hover {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateX(5px);
+}
+
+.quick-link-card {
+    display: block;
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.quick-link-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+}
+
+.quick-link-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.quick-link-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.quick-link-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+</style>
+{% endblock %} 
