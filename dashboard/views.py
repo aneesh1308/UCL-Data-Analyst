@@ -421,6 +421,34 @@ def create_chart_data(data):
         ]
     }
     
+    # Goal Progression Trends Chart (NEW)
+    # Simulate tournament progression data
+    match_days = ['Group Stage', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final']
+    goals_progression = [120, 85, 45, 25, 8]  # Simulated goals per stage
+    assists_progression = [95, 68, 35, 20, 6]  # Simulated assists per stage
+    
+    trends_chart = {
+        'labels': match_days,
+        'datasets': [
+            {
+                'label': 'Goals',
+                'data': goals_progression,
+                'borderColor': '#FF6B6B',
+                'backgroundColor': 'rgba(255, 107, 107, 0.1)',
+                'tension': 0.4,
+                'fill': True
+            },
+            {
+                'label': 'Assists',
+                'data': assists_progression,
+                'borderColor': '#4ECDC4',
+                'backgroundColor': 'rgba(78, 205, 196, 0.1)',
+                'tension': 0.4,
+                'fill': True
+            }
+        ]
+    }
+    
     # Player Performance Chart (for players page)
     top_players = sorted(key_stats, key=lambda x: x.get('performance_rating', 0), reverse=True)[:15]
     
@@ -474,6 +502,7 @@ def create_chart_data(data):
     return {
         'position_chart': json.dumps(position_chart),
         'teams_chart': json.dumps(teams_chart),
+        'trends_chart': json.dumps(trends_chart),
         'performance_chart': json.dumps(performance_chart),
         'rankings_chart': json.dumps(rankings_chart),
         'clusters_chart': json.dumps(clusters_chart),

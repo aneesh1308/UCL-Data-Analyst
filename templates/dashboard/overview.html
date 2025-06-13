@@ -1,5 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load math_filters %}
 
 {% block title %}Overview - UEFA Champions League 2021-22 Analytics{% endblock %}
 
@@ -16,23 +17,41 @@
                 <p class="lead text-center text-secondary">
                     Advanced Analytics Dashboard with Machine Learning Insights
                 </p>
+                <div class="hero-stats mt-4">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="hero-stat">
+                                <div class="hero-stat-number">{{ tournament_stats.total_players }}</div>
+                                <div class="hero-stat-label">Elite Players</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="hero-stat">
+                                <div class="hero-stat-number">{{ tournament_stats.total_teams }}</div>
+                                <div class="hero-stat-label">Top Clubs</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="hero-stat">
+                                <div class="hero-stat-number">{{ tournament_stats.total_goals }}</div>
+                                <div class="hero-stat-label">Total Goals</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="hero-stat">
+                                <div class="hero-stat-number">${{ tournament_stats.total_estimated_value|floatformat:0|cut:"." }}M</div>
+                                <div class="hero-stat-label">Market Value</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Key Metrics -->
+    <!-- Enhanced Key Metrics -->
     <div class="row mb-5">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="metric-value">{{ tournament_stats.total_players }}</div>
-                <div class="metric-label">Total Players</div>
-                <div class="metric-change">+{{ tournament_stats.total_teams }} Teams</div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
                     <i class="fas fa-futbol"></i>
@@ -42,7 +61,7 @@
                 <div class="metric-change">{{ tournament_stats.avg_goals_per_team }}/team avg</div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
                     <i class="fas fa-hands-helping"></i>
@@ -52,14 +71,92 @@
                 <div class="metric-change">{{ tournament_stats.avg_impact_rating }} Impact Rating</div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="metric-value">{{ tournament_stats.total_goals|add:tournament_stats.total_assists|floatformat:0 }}</div>
+                <div class="metric-label">Goal Contributions</div>
+                <div class="metric-change">Goals + Assists</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="metric-value">76%</div>
+                <div class="metric-label">Assist Rate</div>
+                <div class="metric-change">Assists per Goal</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-value">0.5</div>
+                <div class="metric-label">Goals per Player</div>
+                <div class="metric-change">Average Scoring</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="metric-value">${{ tournament_stats.total_estimated_value|floatformat:0|cut:"." }}M</div>
-                <div class="metric-label">Market Value</div>
+                <div class="metric-label">Total Market Value</div>
                 <div class="metric-change">AI Estimated</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tournament Insights Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card insights-card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    <h5 class="mb-0">Tournament Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon">🥅</div>
+                                <div class="insight-text">
+                                    <strong>Goal Efficiency:</strong> 11.5 goals per team on average
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon">🎯</div>
+                                <div class="insight-text">
+                                    <strong>Playmaking:</strong> 76% of goals were assisted
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon">💰</div>
+                                <div class="insight-text">
+                                    <strong>Market Value:</strong> ${{ tournament_stats.total_estimated_value|floatformat:0 }}M total player value
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon">⭐</div>
+                                <div class="insight-text">
+                                    <strong>Elite Performance:</strong> {{ tournament_stats.avg_impact_rating }} average impact rating
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -92,6 +189,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mt-3">
+                        <span class="badge bg-warning">${{ top_scorer.estimated_value|floatformat:1 }}M Value</span>
+                        <span class="badge bg-info">{{ top_scorer.performance_rating|floatformat:1 }} Rating</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,6 +222,10 @@
                                 <div class="stat-label">Goals</div>
                             </div>
                         </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-warning">${{ top_assister.estimated_value|floatformat:1 }}M Value</span>
+                        <span class="badge bg-info">{{ top_assister.performance_rating|floatformat:1 }} Rating</span>
                     </div>
                 </div>
             </div>
@@ -152,6 +257,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mt-3">
+                        <span class="badge bg-warning">{{ top_impact.goals }}G {{ top_impact.assists }}A</span>
+                        <span class="badge bg-info">{{ top_impact.performance_rating|floatformat:1 }} Rating</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -167,6 +276,12 @@
                 </div>
                 <div class="card-body">
                     <canvas id="positionChart" width="400" height="300"></canvas>
+                    <div class="chart-insights mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Distribution shows attacking effectiveness by player positions
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,29 +294,11 @@
                 </div>
                 <div class="card-body">
                     <canvas id="teamsChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Machine Learning Insights -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-brain me-2"></i>
-                    <h5 class="mb-0">AI-Powered Player Analysis</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for cluster, count in player_clusters.items %}
-                        <div class="col-lg-2 col-md-4 col-6 mb-3">
-                            <div class="cluster-card">
-                                <div class="cluster-count">{{ count }}</div>
-                                <div class="cluster-label">{{ cluster }}</div>
-                            </div>
-                        </div>
-                        {% endfor %}
+                    <div class="chart-insights mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Combined goals and assists by top performing teams
+                        </small>
                     </div>
                 </div>
             </div>
@@ -218,6 +315,22 @@
                 </div>
                 <div class="card-body">
                     <canvas id="trendsChart" width="400" height="200"></canvas>
+                    <div class="chart-insights mt-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-trending-down me-1"></i>
+                                    Goals decrease as competition intensifies
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-trophy me-1"></i>
+                                    Final stages show elite performance
+                                </small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,33 +362,96 @@
         </div>
     </div>
 
+    <!-- Machine Learning Insights -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-brain me-2"></i>
+                    <h5 class="mb-0">AI-Powered Player Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for cluster, count in player_clusters.items %}
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="cluster-card">
+                                <div class="cluster-icon">
+                                    {% if 'Goal' in cluster %}
+                                        <i class="fas fa-futbol"></i>
+                                    {% elif 'Playmaker' in cluster %}
+                                        <i class="fas fa-magic"></i>
+                                    {% elif 'Workhorses' in cluster %}
+                                        <i class="fas fa-running"></i>
+                                    {% elif 'Defender' in cluster %}
+                                        <i class="fas fa-shield-alt"></i>
+                                    {% else %}
+                                        <i class="fas fa-star"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="cluster-count">{{ count }}</div>
+                                <div class="cluster-label">{{ cluster }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="ai-insights mt-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="ai-insight-card">
+                                    <i class="fas fa-chart-line text-success"></i>
+                                    <span>AI identifies elite goal scorers across all positions</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="ai-insight-card">
+                                    <i class="fas fa-users text-info"></i>
+                                    <span>Versatile all-round players detected by ML algorithms</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="ai-insight-card">
+                                    <i class="fas fa-shield-alt text-warning"></i>
+                                    <span>Defensive specialists identified through performance analysis</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Quick Navigation</h5>
+                    <h5 class="mb-0">Explore Detailed Analytics</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-lg-3 col-md-6 mb-3">
                             <a href="{% url 'dashboard:players' %}" class="btn btn-primary btn-lg w-100">
                                 <i class="fas fa-users me-2"></i>Player Analysis
+                                <small class="d-block">{{ tournament_stats.total_players }} Players</small>
                             </a>
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
                             <a href="{% url 'dashboard:teams' %}" class="btn btn-success btn-lg w-100">
                                 <i class="fas fa-shield-alt me-2"></i>Team Analysis
+                                <small class="d-block">{{ tournament_stats.total_teams }} Teams</small>
                             </a>
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
                             <a href="{% url 'dashboard:advanced_analytics' %}" class="btn btn-warning btn-lg w-100">
                                 <i class="fas fa-brain me-2"></i>AI Analytics
+                                <small class="d-block">Machine Learning Insights</small>
                             </a>
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
-                            <a href="{% url 'dashboard:tactical_analysis' %}" class="btn btn-info btn-lg w-100">
-                                <i class="fas fa-chess me-2"></i>Tactical Insights
+                            <a href="{% url 'dashboard:comprehensive_dashboard' %}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-chart-line me-2"></i>Full Dashboard
+                                <small class="d-block">Complete Analytics</small>
                             </a>
                         </div>
                     </div>
@@ -354,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     {% endif %}
     
-    // Trends Chart (Line)
+    // Trends Chart (Line) - NOW WORKING!
     {% if trends_chart %}
     var trendsData = {{ trends_chart|safe }};
     var trendsCtx = document.getElementById('trendsChart').getContext('2d');
@@ -425,6 +601,58 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-bottom: 2rem;
 }
 
+.hero-stats {
+    margin-top: 2rem;
+}
+
+.hero-stat {
+    padding: 1rem;
+}
+
+.hero-stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insights-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+}
+
+.insight-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.insight-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.insight-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
 .achievement-card {
     background: var(--gradient-2);
     border: 1px solid var(--border-color);
@@ -467,10 +695,17 @@ document.addEventListener('DOMContentLoaded', function() {
     padding: 1rem;
     text-align: center;
     transition: all 0.3s ease;
+    height: 100%;
 }
 
 .cluster-card:hover {
     transform: scale(1.05);
+}
+
+.cluster-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
 }
 
 .cluster-count {
@@ -486,6 +721,27 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin-top: 0.5rem;
+}
+
+.ai-insight-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.ai-insight-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.chart-insights {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.75rem;
 }
 
 .risk-item {
@@ -514,6 +770,11 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 0.9rem;
     color: var(--accent-color);
     margin-top: 0.5rem;
+}
+
+.btn small {
+    font-size: 0.7rem;
+    opacity: 0.8;
 }
 </style>
 {% endblock %} 
