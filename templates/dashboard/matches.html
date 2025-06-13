@@ -1,19 +1,19 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 
-{% block title %}Match Analysis - UEFA Champions League 2021-22{% endblock %}
+{% block title %}Matches Analysis - UEFA Champions League 2021-22{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="page-header">
                 <h1 class="display-5">
                     <i class="fas fa-futbol text-primary me-3"></i>
-                    Match Analysis
+                    Matches Analysis
                 </h1>
-                <p class="lead text-secondary">Comprehensive match statistics and performance insights</p>
+                <p class="lead text-secondary">Comprehensive match statistics and tournament progression</p>
             </div>
         </div>
     </div>
@@ -23,168 +23,233 @@
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
-                    <i class="fas fa-calendar"></i>
+                    <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div class="metric-value">{{ total_matches }}</div>
                 <div class="metric-label">Total Matches</div>
-                <div class="metric-detail">Tournament Total</div>
+                <div class="metric-change">Across all stages</div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
-                    <i class="fas fa-bullseye"></i>
+                    <i class="fas fa-futbol"></i>
                 </div>
-                <div class="metric-value">{{ avg_goals_per_match|floatformat:1 }}</div>
-                <div class="metric-label">Avg Goals/Match</div>
-                <div class="metric-detail">Scoring Rate</div>
+                <div class="metric-value">{{ total_goals }}</div>
+                <div class="metric-label">Total Goals</div>
+                <div class="metric-change">{{ avg_goals_per_match|floatformat:1 }} per match</div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
-                    <i class="fas fa-bolt"></i>
+                    <i class="fas fa-trophy"></i>
                 </div>
-                <div class="metric-value">{{ highest_scoring_match.goals }}</div>
-                <div class="metric-label">Highest Scoring</div>
-                <div class="metric-detail">{{ highest_scoring_match.teams }}</div>
+                <div class="metric-value">{{ stage_stats|length }}</div>
+                <div class="metric-label">Tournament Stages</div>
+                <div class="metric-change">From Groups to Final</div>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="metric-card">
                 <div class="metric-icon">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-users"></i>
                 </div>
-                <div class="metric-value">{{ avg_distance|floatformat:1 }}</div>
-                <div class="metric-label">Avg Distance</div>
-                <div class="metric-detail">km per Match</div>
+                <div class="metric-value">{{ team_standings|length }}</div>
+                <div class="metric-label">Teams</div>
+                <div class="metric-change">Competing for glory</div>
             </div>
         </div>
     </div>
 
-    <!-- Match Distribution Analysis -->
+    <!-- Match Insights -->
     <div class="row mb-5">
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    <h5 class="mb-0">Match Results Distribution</h5>
-                </div>
-                <div class="card-body">
-                    <div id="resultsChart"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-map-marker-alt me-2"></i>
-                    <h5 class="mb-0">Match Intensity</h5>
+        <div class="col-12">
+            <div class="card insights-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Match Insights
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-6">
-                            <div class="intensity-stat">
-                                <div class="intensity-value">{{ high_intensity_matches }}</div>
-                                <div class="intensity-label">High Intensity</div>
-                                <div class="intensity-percentage">
-                                    {% widthratio high_intensity_matches total_matches 100 %}%
+                        {% for insight in match_insights %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon text-{{ insight.color }}">
+                                    <i class="{{ insight.icon }}"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h6>{{ insight.title }}</h6>
+                                    <p class="mb-0">{{ insight.description }}</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="intensity-stat">
-                                <div class="intensity-value">{{ low_intensity_matches }}</div>
-                                <div class="intensity-label">Low Intensity</div>
-                                <div class="intensity-percentage">
-                                    {% widthratio low_intensity_matches total_matches 100 %}%
-                                </div>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Notable Matches -->
+    <!-- Stage Analysis -->
     <div class="row mb-5">
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-magic me-2"></i>
-                    <h5 class="mb-0">Notable Matches</h5>
-                </div>
-                <div class="card-body">
-                    <div id="notableMatchesChart"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-crosshairs me-2"></i>
-                    <h5 class="mb-0">Match Highlights</h5>
-                </div>
-                <div class="card-body">
-                    {% for match in notable_matches %}
-                    <div class="highlight-card mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
-                                <br><small class="text-muted">{{ match.date }}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-danger">{{ match.score }}</span>
-                                <br><small class="text-muted">{{ match.highlight }}</small>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detailed Match Stats -->
-    <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-table me-2"></i>
-                    <h5 class="mb-0">Detailed Match Statistics</h5>
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Stage-wise Analysis
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-dark table-hover">
                             <thead>
                                 <tr>
-                                    <th>Match</th>
-                                    <th>Date</th>
-                                    <th>Score</th>
+                                    <th>Stage</th>
+                                    <th>Matches</th>
                                     <th>Goals</th>
-                                    <th>Assists</th>
-                                    <th>Distance</th>
-                                    <th>Intensity</th>
-                                    <th>Impact</th>
+                                    <th>Avg Goals</th>
+                                    <th>Home Wins</th>
+                                    <th>Away Wins</th>
+                                    <th>Draws</th>
+                                    <th>Avg Attendance</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for match in match_stats %}
+                                {% for stage, stats in stage_stats.items %}
                                 <tr>
-                                    <td>
-                                        <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
-                                        <br><small class="text-muted">{{ match.stage }}</small>
-                                    </td>
+                                    <td><strong>{{ stage }}</strong></td>
+                                    <td>{{ stats.matches }}</td>
+                                    <td>{{ stats.goals }}</td>
+                                    <td>{{ stats.avg_goals|floatformat:1 }}</td>
+                                    <td><span class="badge bg-success">{{ stats.home_wins }}</span></td>
+                                    <td><span class="badge bg-info">{{ stats.away_wins }}</span></td>
+                                    <td><span class="badge bg-warning">{{ stats.draws }}</span></td>
+                                    <td>{{ stats.avg_attendance|floatformat:0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Scoring Matches & Team Standings -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-fire me-2"></i>
+                        Top Scoring Matches
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for match in top_scoring_matches %}
+                    <div class="match-item mb-3">
+                        <div class="match-teams">
+                            <span class="team-name">{{ match.home_team }}</span>
+                            <span class="match-score">{{ match.home_goals }} - {{ match.away_goals }}</span>
+                            <span class="team-name">{{ match.away_team }}</span>
+                        </div>
+                        <div class="match-details">
+                            <span class="badge bg-primary">{{ match.stage }}</span>
+                            <span class="badge bg-warning">{{ match.total_goals }} goals</span>
+                            <small class="text-muted">{{ match.date }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-ol me-2"></i>
+                        Team Standings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Team</th>
+                                    <th>Pts</th>
+                                    <th>GD</th>
+                                    <th>W-D-L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in team_standings %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ team.team }}</strong></td>
+                                    <td><span class="badge bg-success">{{ team.points }}</span></td>
+                                    <td>{{ team.goal_difference|add:0 }}</td>
+                                    <td><small>{{ team.wins }}-{{ team.draws }}-{{ team.losses }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Matches -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Matches
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Stage</th>
+                                    <th>Home Team</th>
+                                    <th>Score</th>
+                                    <th>Away Team</th>
+                                    <th>Result</th>
+                                    <th>Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in matches_data %}
+                                <tr>
                                     <td>{{ match.date }}</td>
-                                    <td>{{ match.score }}</td>
-                                    <td>{{ match.goals }}</td>
-                                    <td>{{ match.assists }}</td>
-                                    <td>{{ match.total_distance|floatformat:1 }} km</td>
-                                    <td>{{ match.intensity_rating|floatformat:1 }}</td>
-                                    <td>{{ match.match_impact|floatformat:1 }}</td>
+                                    <td><span class="badge bg-primary">{{ match.stage }}</span></td>
+                                    <td><strong>{{ match.home_team }}</strong></td>
+                                    <td class="text-center">
+                                        <span class="match-score">{{ match.home_goals }} - {{ match.away_goals }}</span>
+                                    </td>
+                                    <td><strong>{{ match.away_team }}</strong></td>
+                                    <td>
+                                        {% if match.result == 'Home Win' %}
+                                            <span class="badge bg-success">H</span>
+                                        {% elif match.result == 'Away Win' %}
+                                            <span class="badge bg-info">A</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">D</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ match.attendance|floatformat:0 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -195,22 +260,6 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Results Chart
-    {% if results_chart %}
-    var resultsData = {{ results_chart|safe }};
-    Plotly.newPlot('resultsChart', resultsData.data, resultsData.layout, {responsive: true});
-    {% endif %}
-    
-    // Notable Matches Chart
-    {% if notable_matches_chart %}
-    var notableMatchesData = {{ notable_matches_chart|safe }};
-    Plotly.newPlot('notableMatchesChart', notableMatchesData.data, notableMatchesData.layout, {responsive: true});
-    {% endif %}
-});
-</script>
 
 <style>
 .page-header {
@@ -224,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .metric-card {
     background: var(--gradient-2);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 15px;
     padding: 1.5rem;
     text-align: center;
     transition: all 0.3s ease;
@@ -232,8 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .metric-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
 }
 
 .metric-icon {
@@ -246,79 +295,106 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .metric-value {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: var(--text-primary);
+    margin-bottom: 0.5rem;
 }
 
 .metric-label {
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
-.metric-detail {
-    font-size: 0.8rem;
+.metric-change {
+    font-size: 0.9rem;
     color: var(--accent-color);
-    margin-top: 0.25rem;
 }
 
-.intensity-stat {
-    background: rgba(59, 130, 246, 0.1);
+.insights-card {
+    background: var(--gradient-2);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 15px;
+}
+
+.insight-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
     padding: 1.5rem;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     transition: all 0.3s ease;
 }
 
-.intensity-stat:hover {
-    background: rgba(59, 130, 246, 0.15);
-    transform: translateY(-3px);
+.insight-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
-.intensity-value {
+.insight-icon {
     font-size: 2rem;
+    min-width: 50px;
+}
+
+.insight-content h6 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.insight-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.match-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid var(--accent-color);
+}
+
+.match-teams {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.team-name {
     font-weight: bold;
     color: var(--text-primary);
 }
 
-.intensity-label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 0.5rem;
-}
-
-.intensity-percentage {
+.match-score {
     font-size: 1.2rem;
+    font-weight: bold;
     color: var(--accent-color);
-    margin-top: 0.5rem;
 }
 
-.highlight-card {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: all 0.3s ease;
+.match-details {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
 }
 
-.highlight-card:hover {
-    background: rgba(239, 68, 68, 0.15);
-    transform: translateX(5px);
+.table-dark {
+    background: transparent;
 }
 
 .table-dark th {
-    background: rgba(59, 130, 246, 0.2);
-    border-bottom: 2px solid var(--border-color);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
-.table-dark tbody tr:hover {
-    background: rgba(59, 130, 246, 0.1);
+.table-dark td {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 </style>
 {% endblock %} 

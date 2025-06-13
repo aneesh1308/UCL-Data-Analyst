@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
+from django.core.paginator import Paginator
 import json
 import os
 from django.conf import settings
@@ -63,6 +64,15 @@ def load_data():
                                                  'England', 'Italy', 'Portugal', 'Netherlands', 'Belgium'])
             player['yellow_cards'] = random.randint(0, 5)
             player['red_cards'] = random.randint(0, 1)
+            player['shots_on_target'] = random.randint(0, player['goals'] * 3 + 5)
+            player['shots_total'] = player['shots_on_target'] + random.randint(0, 15)
+            player['pass_accuracy'] = random.uniform(75, 95)
+            player['dribbles_successful'] = random.randint(0, 20)
+            player['tackles_won'] = random.randint(0, 15)
+            player['interceptions'] = random.randint(0, 10)
+            player['age'] = random.randint(18, 35)
+            player['height'] = random.randint(165, 200)
+            player['weight'] = random.randint(60, 95)
         
         print(f"Loaded {len(data.get('key_stats', []))} players from key_stats.csv")
         return data
@@ -877,3 +887,550 @@ def comprehensive_dashboard(request):
         context = {'error': f'Error: {str(e)}'}
     
     return render(request, 'dashboard/comprehensive_dashboard.html', context)
+
+def generate_match_data():
+    """Generate simulated match data for the tournament"""
+    teams = ['Real Madrid', 'Manchester City', 'Liverpool', 'Bayern Munich', 'PSG', 'Chelsea', 
+             'Barcelona', 'Atletico Madrid', 'Juventus', 'Inter Milan', 'AC Milan', 'Napoli',
+             'Borussia Dortmund', 'RB Leipzig', 'Ajax', 'Benfica', 'Porto', 'Sporting CP',
+             'Sevilla', 'Villarreal', 'Manchester United', 'Arsenal', 'Tottenham', 'Leicester',
+             'Atalanta', 'Roma', 'Lazio', 'Fiorentina', 'Valencia', 'Real Sociedad', 'Betis', 'Salzburg']
+    
+    stages = ['Group Stage', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final']
+    
+    matches = []
+    match_id = 1
+    
+    # Generate matches for each stage
+    for stage in stages:
+        if stage == 'Group Stage':
+            num_matches = 48  # 8 groups × 6 matches
+        elif stage == 'Round of 16':
+            num_matches = 16
+        elif stage == 'Quarter Finals':
+            num_matches = 8
+        else:  # Final
+            num_matches = 2  # Final + 3rd place playoff
+        
+        for i in range(num_matches):
+            home_team = random.choice(teams)
+            away_team = random.choice([t for t in teams if t != home_team])
+            
+            home_goals = random.randint(0, 4)
+            away_goals = random.randint(0, 4)
+            
+            # Adjust for knockout stages (less draws)
+            if stage != 'Group Stage' and home_goals == away_goals:
+                if random.choice([True, False]):
+                    home_goals += 1
+                else:
+                    away_goals += 1
+            
+            match = {
+                'match_id': match_id,
+                'stage': stage,
+                'home_team': home_team,
+                'away_team': away_team,
+                'home_goals': home_goals,
+                'away_goals': away_goals,
+                'total_goals': home_goals + away_goals,
+                'result': 'Home Win' if home_goals > away_goals else 'Away Win' if away_goals > home_goals else 'Draw',
+                'attendance': random.randint(40000, 80000),
+                'possession_home': random.randint(35, 65),
+                'shots_home': random.randint(5, 20),
+                'shots_away': random.randint(5, 20),
+                'corners_home': random.randint(2, 12),
+                'corners_away': random.randint(2, 12),
+                'fouls_home': random.randint(8, 20),
+                'fouls_away': random.randint(8, 20),
+                'yellow_cards_home': random.randint(0, 5),
+                'yellow_cards_away': random.randint(0, 5),
+                'red_cards_home': random.randint(0, 1),
+                'red_cards_away': random.randint(0, 1),
+                'date': f"2021-{random.randint(9, 12):02d}-{random.randint(1, 28):02d}"
+            }
+            match['possession_away'] = 100 - match['possession_home']
+            matches.append(match)
+            match_id += 1
+    
+    return matches
+
+def matches(request):
+    """Comprehensive matches analysis page"""
+    try:
+        print("Loading matches page...")
+        data = load_data()
+        if data is None:
+            context = {'error': 'Failed to load data'}
+        else:
+            # Generate match data
+            matches_data = generate_match_data()
+            
+            # Calculate match statistics
+            total_matches = len(matches_data)
+            total_goals = sum(match['total_goals'] for match in matches_data)
+            avg_goals_per_match = total_goals / total_matches if total_matches > 0 else 0
+            
+            # Stage-wise analysis
+            stage_stats = defaultdict(lambda: {
+                'matches': 0, 'goals': 0, 'avg_goals': 0, 'home_wins': 0, 
+                'away_wins': 0, 'draws': 0, 'avg_attendance': 0
+            })
+            
+            for match in matches_data:
+                stage = match['stage']
+                stage_stats[stage]['matches'] += 1
+                stage_stats[stage]['goals'] += match['total_goals']
+                stage_stats[stage]['avg_attendance'] += match['attendance']
+                
+                if match['result'] == 'Home Win':
+                    stage_stats[stage]['home_wins'] += 1
+                elif match['result'] == 'Away Win':
+                    stage_stats[stage]['away_wins'] += 1
+                else:
+                    stage_stats[stage]['draws'] += 1
+            
+            # Calculate averages
+            for stage_data in stage_stats.values():
+                if stage_data['matches'] > 0:
+                    stage_data['avg_goals'] = stage_data['goals'] / stage_data['matches']
+                    stage_data['avg_attendance'] = stage_data['avg_attendance'] / stage_data['matches']
+            
+            # Top matches by goals
+            top_scoring_matches = sorted(matches_data, key=lambda x: x['total_goals'], reverse=True)[:10]
+            
+            # Team performance in matches
+            team_match_stats = defaultdict(lambda: {
+                'matches': 0, 'wins': 0, 'draws': 0, 'losses': 0, 
+                'goals_for': 0, 'goals_against': 0, 'points': 0
+            })
+            
+            for match in matches_data:
+                home_team = match['home_team']
+                away_team = match['away_team']
+                
+                # Home team stats
+                team_match_stats[home_team]['matches'] += 1
+                team_match_stats[home_team]['goals_for'] += match['home_goals']
+                team_match_stats[home_team]['goals_against'] += match['away_goals']
+                
+                # Away team stats
+                team_match_stats[away_team]['matches'] += 1
+                team_match_stats[away_team]['goals_for'] += match['away_goals']
+                team_match_stats[away_team]['goals_against'] += match['home_goals']
+                
+                # Results
+                if match['result'] == 'Home Win':
+                    team_match_stats[home_team]['wins'] += 1
+                    team_match_stats[home_team]['points'] += 3
+                    team_match_stats[away_team]['losses'] += 1
+                elif match['result'] == 'Away Win':
+                    team_match_stats[away_team]['wins'] += 1
+                    team_match_stats[away_team]['points'] += 3
+                    team_match_stats[home_team]['losses'] += 1
+                else:
+                    team_match_stats[home_team]['draws'] += 1
+                    team_match_stats[home_team]['points'] += 1
+                    team_match_stats[away_team]['draws'] += 1
+                    team_match_stats[away_team]['points'] += 1
+            
+            # Convert to list and sort by points
+            team_standings = []
+            for team, stats in team_match_stats.items():
+                stats['team'] = team
+                stats['goal_difference'] = stats['goals_for'] - stats['goals_against']
+                team_standings.append(stats)
+            
+            team_standings.sort(key=lambda x: (x['points'], x['goal_difference']), reverse=True)
+            
+            # Match insights
+            match_insights = [
+                {
+                    'title': 'High-Scoring Tournament',
+                    'description': f'Average of {avg_goals_per_match:.1f} goals per match',
+                    'icon': 'fas fa-futbol',
+                    'color': 'success'
+                },
+                {
+                    'title': 'Home Advantage',
+                    'description': f'{sum(1 for m in matches_data if m["result"] == "Home Win")} home wins vs {sum(1 for m in matches_data if m["result"] == "Away Win")} away wins',
+                    'icon': 'fas fa-home',
+                    'color': 'info'
+                },
+                {
+                    'title': 'Competitive Balance',
+                    'description': f'{sum(1 for m in matches_data if m["result"] == "Draw")} matches ended in draws',
+                    'icon': 'fas fa-balance-scale',
+                    'color': 'warning'
+                }
+            ]
+            
+            context = {
+                'matches_data': matches_data[:20],  # Show first 20 matches
+                'total_matches': total_matches,
+                'total_goals': total_goals,
+                'avg_goals_per_match': avg_goals_per_match,
+                'stage_stats': dict(stage_stats),
+                'top_scoring_matches': top_scoring_matches,
+                'team_standings': team_standings[:16],  # Top 16 teams
+                'match_insights': match_insights,
+                'page_title': 'Matches Analysis'
+            }
+            print(f"Matches context: {total_matches} matches, {total_goals} goals")
+    except Exception as e:
+        print(f"Error in matches: {e}")
+        context = {'error': f'Error: {str(e)}'}
+    
+    return render(request, 'dashboard/matches.html', context)
+
+def goals_and_scoring(request):
+    """Enhanced goals and scoring analysis page"""
+    try:
+        print("Loading goals and scoring page...")
+        data = load_data()
+        if data is None:
+            context = {'error': 'Failed to load data'}
+        else:
+            key_stats = data.get('key_stats', [])
+            goals_data = data.get('goals', [])
+            
+            # Enhanced goal statistics
+            total_goals = sum(player['goals'] for player in key_stats)
+            total_assists = sum(player['assists'] for player in key_stats)
+            total_shots = sum(player['shots_total'] for player in key_stats)
+            total_shots_on_target = sum(player['shots_on_target'] for player in key_stats)
+            
+            # Shooting accuracy
+            shooting_accuracy = (total_shots_on_target / total_shots * 100) if total_shots > 0 else 0
+            conversion_rate = (total_goals / total_shots_on_target * 100) if total_shots_on_target > 0 else 0
+            
+            # Top scorers with enhanced stats
+            top_scorers = sorted(key_stats, key=lambda x: x['goals'], reverse=True)[:20]
+            for scorer in top_scorers:
+                scorer['goals_per_match'] = scorer['goals'] / max(scorer['match_played'], 1)
+                scorer['shot_accuracy'] = (scorer['shots_on_target'] / max(scorer['shots_total'], 1) * 100)
+                scorer['conversion_rate'] = (scorer['goals'] / max(scorer['shots_on_target'], 1) * 100)
+            
+            # Goals by position analysis
+            position_goals = defaultdict(lambda: {'goals': 0, 'players': 0, 'avg_goals': 0})
+            for player in key_stats:
+                pos = player.get('position', 'Unknown')
+                position_goals[pos]['goals'] += player['goals']
+                position_goals[pos]['players'] += 1
+            
+            for pos_data in position_goals.values():
+                if pos_data['players'] > 0:
+                    pos_data['avg_goals'] = pos_data['goals'] / pos_data['players']
+            
+            # Goals by team
+            team_goals = defaultdict(lambda: {'goals': 0, 'assists': 0, 'players': 0})
+            for player in key_stats:
+                team = player.get('club', 'Unknown')
+                team_goals[team]['goals'] += player['goals']
+                team_goals[team]['assists'] += player['assists']
+                team_goals[team]['players'] += 1
+            
+            top_scoring_teams = sorted(team_goals.items(), key=lambda x: x[1]['goals'], reverse=True)[:10]
+            
+            # Goal scoring patterns
+            goal_patterns = {
+                'Prolific Scorers (5+ goals)': len([p for p in key_stats if p['goals'] >= 5]),
+                'Regular Scorers (2-4 goals)': len([p for p in key_stats if 2 <= p['goals'] <= 4]),
+                'Occasional Scorers (1 goal)': len([p for p in key_stats if p['goals'] == 1]),
+                'Non-scorers': len([p for p in key_stats if p['goals'] == 0])
+            }
+            
+            # Assist analysis
+            top_assisters = sorted(key_stats, key=lambda x: x['assists'], reverse=True)[:15]
+            assist_to_goal_ratio = total_assists / total_goals if total_goals > 0 else 0
+            
+            # Goal scoring insights
+            scoring_insights = [
+                {
+                    'title': 'Clinical Finishing',
+                    'description': f'{conversion_rate:.1f}% conversion rate from shots on target',
+                    'icon': 'fas fa-crosshairs',
+                    'color': 'success'
+                },
+                {
+                    'title': 'Team Play',
+                    'description': f'{assist_to_goal_ratio:.1f} assists per goal shows great teamwork',
+                    'icon': 'fas fa-hands-helping',
+                    'color': 'info'
+                },
+                {
+                    'title': 'Shot Accuracy',
+                    'description': f'{shooting_accuracy:.1f}% of shots hit the target',
+                    'icon': 'fas fa-bullseye',
+                    'color': 'warning'
+                }
+            ]
+            
+            context = {
+                'total_goals': total_goals,
+                'total_assists': total_assists,
+                'total_shots': total_shots,
+                'total_shots_on_target': total_shots_on_target,
+                'shooting_accuracy': shooting_accuracy,
+                'conversion_rate': conversion_rate,
+                'top_scorers': top_scorers,
+                'top_assisters': top_assisters,
+                'position_goals': dict(position_goals),
+                'top_scoring_teams': top_scoring_teams,
+                'goal_patterns': goal_patterns,
+                'assist_to_goal_ratio': assist_to_goal_ratio,
+                'scoring_insights': scoring_insights,
+                'page_title': 'Goals & Scoring Analysis'
+            }
+            print(f"Goals context: {total_goals} goals, {total_assists} assists")
+    except Exception as e:
+        print(f"Error in goals_and_scoring: {e}")
+        context = {'error': f'Error: {str(e)}'}
+    
+    return render(request, 'dashboard/goals_scoring.html', context)
+
+def players(request):
+    """Enhanced players page with pagination and detailed analytics"""
+    try:
+        print("Loading enhanced players page...")
+        data = load_data()
+        if data is None:
+            context = {'error': 'Failed to load data'}
+        else:
+            key_stats = data.get('key_stats', [])
+            
+            # Get filter parameters
+            position_filter = request.GET.get('position', '')
+            team_filter = request.GET.get('team', '')
+            sort_by = request.GET.get('sort', 'performance_rating')
+            
+            # Filter players
+            filtered_players = key_stats.copy()
+            
+            if position_filter:
+                filtered_players = [p for p in filtered_players if p.get('position', '') == position_filter]
+            
+            if team_filter:
+                filtered_players = [p for p in filtered_players if p.get('club', '') == team_filter]
+            
+            # Sort players
+            if sort_by == 'goals':
+                filtered_players.sort(key=lambda x: x['goals'], reverse=True)
+            elif sort_by == 'assists':
+                filtered_players.sort(key=lambda x: x['assists'], reverse=True)
+            elif sort_by == 'minutes_played':
+                filtered_players.sort(key=lambda x: x['minutes_played'], reverse=True)
+            elif sort_by == 'estimated_value':
+                filtered_players.sort(key=lambda x: x['estimated_value'], reverse=True)
+            else:  # performance_rating
+                filtered_players.sort(key=lambda x: x['performance_rating'], reverse=True)
+            
+            # Enhanced player statistics
+            for player in filtered_players:
+                player['goals_per_match'] = player['goals'] / max(player['match_played'], 1)
+                player['assists_per_match'] = player['assists'] / max(player['match_played'], 1)
+                player['minutes_per_goal'] = player['minutes_played'] / max(player['goals'], 1)
+                player['shot_accuracy'] = (player['shots_on_target'] / max(player['shots_total'], 1) * 100)
+                player['bmi'] = player['weight'] / ((player['height'] / 100) ** 2)
+                player['fitness_score'] = (player['distance_covered'] / max(player['minutes_played'], 1)) * 90
+            
+            # Pagination
+            paginator = Paginator(filtered_players, 20)  # 20 players per page
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+            
+            # Get unique values for filters
+            positions = sorted(list(set(p.get('position', '') for p in key_stats if p.get('position'))))
+            teams = sorted(list(set(p.get('club', '') for p in key_stats if p.get('club'))))
+            
+            # Player analytics
+            total_players = len(key_stats)
+            avg_age = sum(p['age'] for p in key_stats) / len(key_stats)
+            avg_goals = sum(p['goals'] for p in key_stats) / len(key_stats)
+            avg_assists = sum(p['assists'] for p in key_stats) / len(key_stats)
+            
+            # Age distribution
+            age_groups = {
+                'Young (18-23)': len([p for p in key_stats if 18 <= p['age'] <= 23]),
+                'Prime (24-29)': len([p for p in key_stats if 24 <= p['age'] <= 29]),
+                'Experienced (30+)': len([p for p in key_stats if p['age'] >= 30])
+            }
+            
+            # Performance categories
+            performance_categories = {
+                'Elite (Rating > 15)': len([p for p in key_stats if p['performance_rating'] > 15]),
+                'Excellent (10-15)': len([p for p in key_stats if 10 <= p['performance_rating'] <= 15]),
+                'Good (5-10)': len([p for p in key_stats if 5 <= p['performance_rating'] < 10]),
+                'Average (<5)': len([p for p in key_stats if p['performance_rating'] < 5])
+            }
+            
+            # Top performers by category
+            top_performers = {
+                'goals': sorted(key_stats, key=lambda x: x['goals'], reverse=True)[:5],
+                'assists': sorted(key_stats, key=lambda x: x['assists'], reverse=True)[:5],
+                'performance': sorted(key_stats, key=lambda x: x['performance_rating'], reverse=True)[:5],
+                'value': sorted(key_stats, key=lambda x: x['estimated_value'], reverse=True)[:5],
+                'fitness': sorted(key_stats, key=lambda x: x['fitness_score'], reverse=True)[:5]
+            }
+            
+            context = {
+                'page_obj': page_obj,
+                'players': page_obj.object_list,
+                'total_players': total_players,
+                'filtered_count': len(filtered_players),
+                'positions': positions,
+                'teams': teams,
+                'current_filters': {
+                    'position': position_filter,
+                    'team': team_filter,
+                    'sort': sort_by
+                },
+                'avg_age': avg_age,
+                'avg_goals': avg_goals,
+                'avg_assists': avg_assists,
+                'age_groups': age_groups,
+                'performance_categories': performance_categories,
+                'top_performers': top_performers,
+                'page_title': 'Players Analysis'
+            }
+            print(f"Enhanced players context: {len(filtered_players)} players, page {page_obj.number}")
+    except Exception as e:
+        print(f"Error in enhanced players: {e}")
+        context = {'error': f'Error: {str(e)}'}
+    
+    return render(request, 'dashboard/players_enhanced.html', context)
+
+def tactics_analysis(request):
+    """Comprehensive tactics analysis page"""
+    try:
+        print("Loading tactics analysis page...")
+        data = load_data()
+        if data is None:
+            context = {'error': 'Failed to load data'}
+        else:
+            key_stats = data.get('key_stats', [])
+            matches_data = generate_match_data()
+            
+            # Tactical formations analysis (simulated)
+            formations = {
+                '4-3-3': {'usage': 35, 'avg_goals': 2.1, 'win_rate': 58},
+                '4-2-3-1': {'usage': 28, 'avg_goals': 1.8, 'win_rate': 52},
+                '3-5-2': {'usage': 15, 'avg_goals': 2.3, 'win_rate': 61},
+                '4-4-2': {'usage': 12, 'avg_goals': 1.9, 'win_rate': 49},
+                '5-3-2': {'usage': 10, 'avg_goals': 1.6, 'win_rate': 45}
+            }
+            
+            # Playing styles analysis
+            playing_styles = {
+                'Possession-based': {
+                    'teams': 12,
+                    'avg_possession': 62.5,
+                    'pass_accuracy': 87.2,
+                    'goals_per_match': 1.9
+                },
+                'Counter-attacking': {
+                    'teams': 8,
+                    'avg_possession': 42.3,
+                    'pass_accuracy': 78.5,
+                    'goals_per_match': 2.1
+                },
+                'High-pressing': {
+                    'teams': 7,
+                    'avg_possession': 55.8,
+                    'pass_accuracy': 82.1,
+                    'goals_per_match': 2.3
+                },
+                'Defensive': {
+                    'teams': 5,
+                    'avg_possession': 38.9,
+                    'pass_accuracy': 75.2,
+                    'goals_per_match': 1.4
+                }
+            }
+            
+            # Position-based tactical analysis
+            position_tactics = {}
+            for player in key_stats:
+                pos = player.get('position', 'Unknown')
+                if pos not in position_tactics:
+                    position_tactics[pos] = {
+                        'players': 0,
+                        'avg_pass_accuracy': 0,
+                        'avg_dribbles': 0,
+                        'avg_tackles': 0,
+                        'avg_interceptions': 0,
+                        'total_distance': 0
+                    }
+                
+                position_tactics[pos]['players'] += 1
+                position_tactics[pos]['avg_pass_accuracy'] += player['pass_accuracy']
+                position_tactics[pos]['avg_dribbles'] += player['dribbles_successful']
+                position_tactics[pos]['avg_tackles'] += player['tackles_won']
+                position_tactics[pos]['avg_interceptions'] += player['interceptions']
+                position_tactics[pos]['total_distance'] += player['distance_covered']
+            
+            # Calculate averages
+            for pos_data in position_tactics.values():
+                if pos_data['players'] > 0:
+                    pos_data['avg_pass_accuracy'] /= pos_data['players']
+                    pos_data['avg_dribbles'] /= pos_data['players']
+                    pos_data['avg_tackles'] /= pos_data['players']
+                    pos_data['avg_interceptions'] /= pos_data['players']
+                    pos_data['avg_distance'] = pos_data['total_distance'] / pos_data['players']
+            
+            # Team tactical profiles (simulated)
+            team_tactics = []
+            teams = list(set(p.get('club', '') for p in key_stats if p.get('club')))[:16]
+            
+            for team in teams:
+                team_players = [p for p in key_stats if p.get('club') == team]
+                if team_players:
+                    profile = {
+                        'team': team,
+                        'formation': random.choice(list(formations.keys())),
+                        'style': random.choice(list(playing_styles.keys())),
+                        'avg_possession': random.randint(35, 65),
+                        'avg_pass_accuracy': sum(p['pass_accuracy'] for p in team_players) / len(team_players),
+                        'pressing_intensity': random.choice(['Low', 'Medium', 'High', 'Very High']),
+                        'defensive_line': random.choice(['Low', 'Medium', 'High']),
+                        'attacking_width': random.choice(['Narrow', 'Balanced', 'Wide']),
+                        'tempo': random.choice(['Slow', 'Medium', 'Fast', 'Very Fast'])
+                    }
+                    team_tactics.append(profile)
+            
+            # Tactical insights
+            tactical_insights = [
+                {
+                    'title': 'Formation Effectiveness',
+                    'description': '3-5-2 formation shows highest win rate at 61%',
+                    'icon': 'fas fa-chess-board',
+                    'color': 'success'
+                },
+                {
+                    'title': 'High-Pressing Success',
+                    'description': 'Teams using high-pressing average 2.3 goals per match',
+                    'icon': 'fas fa-running',
+                    'color': 'info'
+                },
+                {
+                    'title': 'Possession vs Results',
+                    'description': 'Counter-attacking teams more clinical despite less possession',
+                    'icon': 'fas fa-chart-line',
+                    'color': 'warning'
+                }
+            ]
+            
+            context = {
+                'formations': formations,
+                'playing_styles': playing_styles,
+                'position_tactics': position_tactics,
+                'team_tactics': team_tactics,
+                'tactical_insights': tactical_insights,
+                'page_title': 'Tactical Analysis'
+            }
+            print(f"Tactics context: {len(formations)} formations, {len(playing_styles)} styles")
+    except Exception as e:
+        print(f"Error in tactics_analysis: {e}")
+        context = {'error': f'Error: {str(e)}'}
+    
+    return render(request, 'dashboard/tactics.html', context)

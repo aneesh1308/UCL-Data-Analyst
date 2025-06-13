@@ -1,0 +1,415 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block title %}Goals & Scoring Analysis - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-futbol text-warning me-3"></i>
+                    Goals & Scoring Analysis
+                </h1>
+                <p class="lead text-secondary">Comprehensive goal statistics, shooting accuracy, and scoring patterns</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-futbol"></i>
+                </div>
+                <div class="metric-value">{{ total_goals }}</div>
+                <div class="metric-label">Total Goals</div>
+                <div class="metric-change">Tournament Total</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-hands-helping"></i>
+                </div>
+                <div class="metric-value">{{ total_assists }}</div>
+                <div class="metric-label">Total Assists</div>
+                <div class="metric-change">{{ assist_to_goal_ratio|floatformat:1 }} per goal</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-crosshairs"></i>
+                </div>
+                <div class="metric-value">{{ shooting_accuracy|floatformat:1 }}%</div>
+                <div class="metric-label">Shot Accuracy</div>
+                <div class="metric-change">{{ total_shots_on_target }}/{{ total_shots }} shots</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="metric-value">{{ conversion_rate|floatformat:1 }}%</div>
+                <div class="metric-label">Conversion Rate</div>
+                <div class="metric-change">Goals from shots on target</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scoring Insights -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card insights-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Scoring Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for insight in scoring_insights %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="insight-item">
+                                <div class="insight-icon text-{{ insight.color }}">
+                                    <i class="{{ insight.icon }}"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h6>{{ insight.title }}</h6>
+                                    <p class="mb-0">{{ insight.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Patterns & Position Analysis -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Goal Scoring Patterns
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for pattern, count in goal_patterns.items %}
+                    <div class="pattern-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="pattern-label">{{ pattern }}</span>
+                            <span class="pattern-count">{{ count }} players</span>
+                        </div>
+                        <div class="pattern-bar">
+                            <div class="pattern-fill" style="width: {% widthratio count 200 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Goals by Position
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for position, stats in position_goals.items %}
+                    <div class="position-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="position-name">{{ position }}</span>
+                            <span class="position-stats">{{ stats.goals }} goals ({{ stats.avg_goals|floatformat:1 }} avg)</span>
+                        </div>
+                        <div class="position-bar">
+                            <div class="position-fill" style="width: {% widthratio stats.goals 50 100 %}%"></div>
+                        </div>
+                        <small class="text-muted">{{ stats.players }} players</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Scorers & Assisters -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>
+                        Top Goal Scorers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Player</th>
+                                    <th>Team</th>
+                                    <th>Goals</th>
+                                    <th>G/Match</th>
+                                    <th>Shot Acc.</th>
+                                    <th>Conv. Rate</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for scorer in top_scorers %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ scorer.player_name }}</strong></td>
+                                    <td>{{ scorer.club }}</td>
+                                    <td><span class="badge bg-warning">{{ scorer.goals }}</span></td>
+                                    <td>{{ scorer.goals_per_match|floatformat:2 }}</td>
+                                    <td>{{ scorer.shot_accuracy|floatformat:1 }}%</td>
+                                    <td>{{ scorer.conversion_rate|floatformat:1 }}%</td>
+                                    <td>${{ scorer.estimated_value|floatformat:1 }}M</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>
+                        Top Assist Providers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for assister in top_assisters %}
+                    <div class="assister-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ assister.player_name }}</strong>
+                                <br><small class="text-muted">{{ assister.club }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success">{{ assister.assists }}</span>
+                                <br><small class="text-muted">{{ assister.goals }}G</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Scoring Analysis -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Top Scoring Teams
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Team</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th>Total Contributions</th>
+                                    <th>Players</th>
+                                    <th>Avg Goals/Player</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team, stats in top_scoring_teams %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ team }}</strong></td>
+                                    <td><span class="badge bg-warning">{{ stats.goals }}</span></td>
+                                    <td><span class="badge bg-success">{{ stats.assists }}</span></td>
+                                    <td><span class="badge bg-primary">{{ stats.goals|add:stats.assists }}</span></td>
+                                    <td>{{ stats.players }}</td>
+                                    <td>{{ stats.goals|div:stats.players|floatformat:1 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-change {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+}
+
+.insights-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+}
+
+.insight-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.insight-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.insight-icon {
+    font-size: 2rem;
+    min-width: 50px;
+}
+
+.insight-content h6 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.insight-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.pattern-item, .position-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.pattern-bar, .position-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.pattern-fill {
+    height: 100%;
+    background: var(--gradient-1);
+    transition: width 0.3s ease;
+}
+
+.position-fill {
+    height: 100%;
+    background: var(--gradient-2);
+    transition: width 0.3s ease;
+}
+
+.pattern-label, .position-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.pattern-count, .position-stats {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.assister-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid var(--accent-color);
+}
+
+.table-dark {
+    background: transparent;
+}
+
+.table-dark th {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.table-dark td {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+</style>
+{% endblock %} 

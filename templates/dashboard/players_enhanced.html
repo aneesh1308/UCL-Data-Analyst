@@ -1,0 +1,518 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Players Analysis - UEFA Champions League 2021-22{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="display-5">
+                    <i class="fas fa-users text-primary me-3"></i>
+                    Players Analysis
+                </h1>
+                <p class="lead text-secondary">Comprehensive player statistics with advanced filtering and analytics</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-value">{{ total_players }}</div>
+                <div class="metric-label">Total Players</div>
+                <div class="metric-change">{{ filtered_count }} filtered</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-birthday-cake"></i>
+                </div>
+                <div class="metric-value">{{ avg_age|floatformat:1 }}</div>
+                <div class="metric-label">Average Age</div>
+                <div class="metric-change">Years old</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-futbol"></i>
+                </div>
+                <div class="metric-value">{{ avg_goals|floatformat:1 }}</div>
+                <div class="metric-label">Avg Goals</div>
+                <div class="metric-change">Per player</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-hands-helping"></i>
+                </div>
+                <div class="metric-value">{{ avg_assists|floatformat:1 }}</div>
+                <div class="metric-label">Avg Assists</div>
+                <div class="metric-change">Per player</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Analytics -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filters & Sorting
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="position" class="form-label">Position</label>
+                            <select name="position" id="position" class="form-select">
+                                <option value="">All Positions</option>
+                                {% for position in positions %}
+                                <option value="{{ position }}" {% if current_filters.position == position %}selected{% endif %}>
+                                    {{ position }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="team" class="form-label">Team</label>
+                            <select name="team" id="team" class="form-select">
+                                <option value="">All Teams</option>
+                                {% for team in teams %}
+                                <option value="{{ team }}" {% if current_filters.team == team %}selected{% endif %}>
+                                    {{ team }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sort" class="form-label">Sort By</label>
+                            <select name="sort" id="sort" class="form-select">
+                                <option value="performance_rating" {% if current_filters.sort == 'performance_rating' %}selected{% endif %}>Performance Rating</option>
+                                <option value="goals" {% if current_filters.sort == 'goals' %}selected{% endif %}>Goals</option>
+                                <option value="assists" {% if current_filters.sort == 'assists' %}selected{% endif %}>Assists</option>
+                                <option value="minutes_played" {% if current_filters.sort == 'minutes_played' %}selected{% endif %}>Minutes Played</option>
+                                <option value="estimated_value" {% if current_filters.sort == 'estimated_value' %}selected{% endif %}>Market Value</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Age Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for group, count in age_groups.items %}
+                    <div class="age-group-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="age-label">{{ group }}</span>
+                            <span class="age-count">{{ count }} players</span>
+                        </div>
+                        <div class="age-bar">
+                            <div class="age-fill" style="width: {% widthratio count total_players 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        Top Performers by Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-warning">Top Scorers</h6>
+                                {% for player in top_performers.goals %}
+                                <div class="performer-item">
+                                    <small><strong>{{ player.player_name }}</strong></small>
+                                    <span class="badge bg-warning">{{ player.goals }}G</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-success">Top Assisters</h6>
+                                {% for player in top_performers.assists %}
+                                <div class="performer-item">
+                                    <small><strong>{{ player.player_name }}</strong></small>
+                                    <span class="badge bg-success">{{ player.assists }}A</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-info">Best Performance</h6>
+                                {% for player in top_performers.performance %}
+                                <div class="performer-item">
+                                    <small><strong>{{ player.player_name }}</strong></small>
+                                    <span class="badge bg-info">{{ player.performance_rating|floatformat:1 }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-primary">Most Valuable</h6>
+                                {% for player in top_performers.value %}
+                                <div class="performer-item">
+                                    <small><strong>{{ player.player_name }}</strong></small>
+                                    <span class="badge bg-primary">${{ player.estimated_value|floatformat:0 }}M</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-danger">Fittest</h6>
+                                {% for player in top_performers.fitness %}
+                                <div class="performer-item">
+                                    <small><strong>{{ player.player_name }}</strong></small>
+                                    <span class="badge bg-danger">{{ player.fitness_score|floatformat:1 }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <div class="performer-category">
+                                <h6 class="text-secondary">Performance Categories</h6>
+                                {% for category, count in performance_categories.items %}
+                                <div class="performer-item">
+                                    <small>{{ category }}</small>
+                                    <span class="badge bg-secondary">{{ count }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Players Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Players List ({{ filtered_count }} players)
+                    </h5>
+                    <div class="pagination-info">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Player</th>
+                                    <th>Team</th>
+                                    <th>Position</th>
+                                    <th>Age</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th>G/M</th>
+                                    <th>A/M</th>
+                                    <th>Shot Acc.</th>
+                                    <th>Performance</th>
+                                    <th>Value</th>
+                                    <th>Fitness</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in players %}
+                                <tr>
+                                    <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                    <td>
+                                        <strong>{{ player.player_name }}</strong>
+                                        <br><small class="text-muted">{{ player.height }}cm, {{ player.weight }}kg</small>
+                                    </td>
+                                    <td>{{ player.club }}</td>
+                                    <td><span class="badge bg-secondary">{{ player.position }}</span></td>
+                                    <td>{{ player.age }}</td>
+                                    <td><span class="badge bg-warning">{{ player.goals }}</span></td>
+                                    <td><span class="badge bg-success">{{ player.assists }}</span></td>
+                                    <td>{{ player.goals_per_match|floatformat:2 }}</td>
+                                    <td>{{ player.assists_per_match|floatformat:2 }}</td>
+                                    <td>{{ player.shot_accuracy|floatformat:1 }}%</td>
+                                    <td>
+                                        <div class="performance-bar">
+                                            <div class="performance-fill" style="width: {% widthratio player.performance_rating 20 100 %}%"></div>
+                                        </div>
+                                        <small>{{ player.performance_rating|floatformat:1 }}</small>
+                                    </td>
+                                    <td>${{ player.estimated_value|floatformat:1 }}M</td>
+                                    <td>
+                                        <div class="fitness-indicator">
+                                            {% if player.fitness_score > 8 %}
+                                                <span class="badge bg-success">Excellent</span>
+                                            {% elif player.fitness_score > 6 %}
+                                                <span class="badge bg-info">Good</span>
+                                            {% elif player.fitness_score > 4 %}
+                                                <span class="badge bg-warning">Average</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Poor</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Players pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    background: var(--gradient-2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.metric-card {
+    background: var(--gradient-2);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-change {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+}
+
+.form-select, .form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-select:focus, .form-control:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.form-select option {
+    background: var(--dark-bg);
+    color: var(--text-primary);
+}
+
+.age-group-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.age-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.age-fill {
+    height: 100%;
+    background: var(--gradient-1);
+    transition: width 0.3s ease;
+}
+
+.age-label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.age-count {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.performer-category {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.performer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.performance-bar {
+    width: 60px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.performance-fill {
+    height: 100%;
+    background: var(--gradient-1);
+    transition: width 0.3s ease;
+}
+
+.table-dark {
+    background: transparent;
+}
+
+.table-dark th {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.table-dark td {
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.table-hover tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pagination .page-link {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.pagination .page-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %} 
