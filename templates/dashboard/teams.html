@@ -141,6 +141,94 @@
         </div>
     </div>
 
+    <!-- Team Comparison -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-balance-scale me-2"></i>
+                    <h5 class="mb-0">Team Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <select name="team1" class="form-select" required>
+                                <option value="">Select First Team</option>
+                                {% for team in team_stats %}
+                                <option value="{{ team.club }}" {% if current_filters.team1 == team.club %}selected{% endif %}>
+                                    {{ team.club }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <select name="team2" class="form-select" required>
+                                <option value="">Select Second Team</option>
+                                {% for team in team_stats %}
+                                <option value="{{ team.club }}" {% if current_filters.team2 == team.club %}selected{% endif %}>
+                                    {{ team.club }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Compare</button>
+                        </div>
+                    </form>
+
+                    {% if comparison_data %}
+                    <div class="comparison-results">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-center mb-3">{{ comparison_data.team1.club }}</h6>
+                                <div class="comparison-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Goals Scored</span>
+                                        <span class="stat-value">{{ comparison_data.team1.goals_for }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Goals Conceded</span>
+                                        <span class="stat-value">{{ comparison_data.team1.goals_against }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Win Rate</span>
+                                        <span class="stat-value">{{ comparison_data.team1.win_rate }}%</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Points</span>
+                                        <span class="stat-value">{{ comparison_data.team1.points }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-center mb-3">{{ comparison_data.team2.club }}</h6>
+                                <div class="comparison-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Goals Scored</span>
+                                        <span class="stat-value">{{ comparison_data.team2.goals_for }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Goals Conceded</span>
+                                        <span class="stat-value">{{ comparison_data.team2.goals_against }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Win Rate</span>
+                                        <span class="stat-value">{{ comparison_data.team2.win_rate }}%</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Points</span>
+                                        <span class="stat-value">{{ comparison_data.team2.points }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Detailed Team Stats -->
     <div class="row">
         <div class="col-12">
@@ -185,6 +273,53 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Team list pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if current_filters.team1 %}&team1={{ current_filters.team1 }}{% endif %}{% if current_filters.team2 %}&team2={{ current_filters.team2 }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_filters.team1 %}&team1={{ current_filters.team1 }}{% endif %}{% if current_filters.team2 %}&team2={{ current_filters.team2 }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if current_filters.team1 %}&team1={{ current_filters.team1 }}{% endif %}{% if current_filters.team2 %}&team2={{ current_filters.team2 }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_filters.team1 %}&team1={{ current_filters.team1 }}{% endif %}{% if current_filters.team2 %}&team2={{ current_filters.team2 }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_filters.team1 %}&team1={{ current_filters.team1 }}{% endif %}{% if current_filters.team2 %}&team2={{ current_filters.team2 }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -338,6 +473,50 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 0.8rem;
     color: var(--text-secondary);
     margin-top: 0.5rem;
+}
+
+.comparison-stats {
+    background-color: #2b3035;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #adb5bd;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.pagination .page-link {
+    background-color: #2b3035;
+    border-color: #495057;
+    color: #ffffff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.pagination .page-link:hover {
+    background-color: #495057;
+    border-color: #495057;
+    color: #ffffff;
 }
 </style>
 {% endblock %} 

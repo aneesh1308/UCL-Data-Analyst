@@ -223,50 +223,101 @@ elif page == "teams":
         'assists': 'sum', 
         'minutes_played': 'sum',
         'distance_covered': 'sum',
-        'player_name': 'count'
+        'player_name': 'count',
+        'match_played': 'sum'
     }).rename(columns={'player_name': 'total_players'}).round(2)
     
     team_stats['goals_per_player'] = (team_stats['goals'] / team_stats['total_players']).round(2)
+    team_stats['win_rate'] = (team_stats['match_played'] / team_stats['match_played'].max() * 100).round(2)
     team_stats = team_stats.sort_values('goals', ascending=False)
     
-    # Team selector
-    selected_teams_compare = st.multiselect("Select teams to compare:", 
-                                           options=team_stats.index.tolist(),
-                                           default=team_stats.index[:5].tolist())
+    # Team comparison section
+    st.subheader("Team Comparison")
+    col1, col2 = st.columns(2)
     
-    if selected_teams_compare:
-        # Team comparison chart
-        comparison_data = team_stats.loc[selected_teams_compare]
+    with col1:
+        team1 = st.selectbox("Select first team:", 
+                            options=[''] + sorted(team_stats.index.tolist()),
+                            key='team1')
+    
+    with col2:
+        team2 = st.selectbox("Select second team:", 
+                            options=[''] + sorted(team_stats.index.tolist()),
+                            key='team2')
+    
+    if team1 and team2:
+        comparison_data = team_stats.loc[[team1, team2]]
         
+        # Comparison metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Goals", 
+                     f"{comparison_data.loc[team1, 'goals']} vs {comparison_data.loc[team2, 'goals']}",
+                     f"{comparison_data.loc[team1, 'goals'] - comparison_data.loc[team2, 'goals']}")
+        
+        with col2:
+            st.metric("Assists",
+                     f"{comparison_data.loc[team1, 'assists']} vs {comparison_data.loc[team2, 'assists']}",
+                     f"{comparison_data.loc[team1, 'assists'] - comparison_data.loc[team2, 'assists']}")
+        
+        with col3:
+            st.metric("Players",
+                     f"{comparison_data.loc[team1, 'total_players']} vs {comparison_data.loc[team2, 'total_players']}",
+                     f"{comparison_data.loc[team1, 'total_players'] - comparison_data.loc[team2, 'total_players']}")
+        
+        with col4:
+            st.metric("Win Rate",
+                     f"{comparison_data.loc[team1, 'win_rate']}% vs {comparison_data.loc[team2, 'win_rate']}%",
+                     f"{comparison_data.loc[team1, 'win_rate'] - comparison_data.loc[team2, 'win_rate']}%")
+        
+        # Comparison charts
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("📊 Goals Comparison")
-            fig = px.bar(comparison_data.reset_index(), x='club', y='goals',
-                        color='goals', color_continuous_scale='blues',
-                        title="Total Goals by Team")
+            fig = px.bar(comparison_data.reset_index(), x='club', y=['goals', 'assists'],
+                        barmode='group', title="Goals vs Assists Comparison")
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            st.subheader("🎯 Assists Comparison")
-            fig = px.bar(comparison_data.reset_index(), x='club', y='assists',
-                        color='assists', color_continuous_scale='greens',
-                        title="Total Assists by Team")
+            fig = px.bar(comparison_data.reset_index(), x='club', y='goals_per_player',
+                        title="Goals per Player")
             st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed team stats table
-        st.subheader("📈 Detailed Team Statistics")
-        st.dataframe(comparison_data, use_container_width=True)
     
-    # Overall team rankings
-    st.subheader("🏆 Complete Team Rankings")
+    # Team statistics table with pagination
+    st.subheader("Team Statistics")
     
-    # Add ranking column
-    team_stats_display = team_stats.reset_index()
-    team_stats_display['rank'] = range(1, len(team_stats_display) + 1)
+    # Pagination
+    items_per_page = 5
+    total_pages = len(team_stats) // items_per_page + (1 if len(team_stats) % items_per_page > 0 else 0)
+    page_number = st.selectbox("Page", range(1, total_pages + 1))
     
-    st.dataframe(team_stats_display[['rank', 'club', 'goals', 'assists', 'total_players', 'goals_per_player']], 
-                use_container_width=True)
+    start_idx = (page_number - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    
+    # Display paginated data
+    st.dataframe(
+        team_stats.iloc[start_idx:end_idx].style.background_gradient(cmap='Blues'),
+        use_container_width=True
+    )
+    
+    # Team performance metrics
+    st.subheader("Team Performance Metrics")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        fig = px.scatter(team_stats.reset_index(), x='goals', y='assists',
+                        size='total_players', color='win_rate',
+                        hover_data=['club', 'goals_per_player'],
+                        title="Goals vs Assists (Bubble size = Total Players)")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        fig = px.bar(team_stats.reset_index().sort_values('goals_per_player', ascending=False).head(10),
+                    x='club', y='goals_per_player',
+                    title="Top 10 Teams by Goals per Player")
+        st.plotly_chart(fig, use_container_width=True)
 
 elif page == "goals":
     st.header("⚽ Goals & Scoring Analysis")
