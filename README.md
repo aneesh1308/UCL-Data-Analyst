@@ -1,7 +1,22 @@
 # UEFA Champions League 2021-22 Data Analysis Dashboard
 
+## 🚀 Live Demo
+**🌐 Deployed Application**: [https://ucl-data-analyst.vercel.app](https://ucl-data-analyst.vercel.app)
+
+**📊 Featured Pages**:
+- [Team Analysis](https://ucl-data-analyst.vercel.app/teams) - Interactive team comparison and statistics
+- [Player Analysis](https://ucl-data-analyst.vercel.app/players) - Advanced player filtering and analytics
+- [Goals & Scoring](https://ucl-data-analyst.vercel.app/goals) - Goal analysis and scoring patterns
+- [Match Explorer](https://ucl-data-analyst.vercel.app/matches) - Match analysis and insights
+
 ## Overview
 This project provides a comprehensive analysis of the UEFA Champions League 2021-22 season through interactive dashboards and data visualizations. The analysis covers player statistics, team performance, match insights, and tactical analysis.
+
+**🏆 Key Highlights from Live Data**:
+- **Champion**: Man. United (30 points)
+- **Top Scorer**: Bayern (30 goals)
+- **Best Defense**: Salzburg (5 goals conceded)
+- **Possession Leaders**: Inter (64.8%)
 
 ## Features
 
@@ -139,6 +154,25 @@ The application is configured for deployment on Vercel with the following setup:
    git commit -m "Your commit message"
    git push origin master
    ```
+
+## 🌐 Live Deployment
+
+**Production URL**: [https://ucl-data-analyst.vercel.app](https://ucl-data-analyst.vercel.app)
+
+### Deployment Status
+- ✅ **Deployed on Vercel**: Serverless deployment with automatic scaling
+- ✅ **Public Access**: No authentication required - open to all users
+- ✅ **AJAX Functionality**: Real-time filtering and comparison without page reloads
+- ✅ **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- ✅ **Performance Optimized**: Fast loading with efficient data processing
+- ✅ **SEO Friendly**: Proper meta tags and structured data
+
+### Live Features Working
+- **Team Comparison**: Interactive AJAX-powered team comparison tool
+- **Player Filtering**: Real-time player filtering by position, team, and performance
+- **Data Visualization**: Interactive charts using Chart.js
+- **Pagination**: Smooth pagination without page reloads
+- **Dark Theme**: Modern UI with proper contrast and accessibility
 
 ## Project Structure
 
