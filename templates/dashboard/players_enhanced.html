@@ -73,7 +73,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="get" class="row g-3">
+                    <form method="get" class="row g-3" id="playerFilterForm">
                         <div class="col-md-3">
                             <label for="position" class="form-label">Position</label>
                             <select name="position" id="position" class="form-select">
@@ -109,7 +109,7 @@
                         <div class="col-md-3">
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                                <button type="button" class="btn btn-primary" id="applyFiltersBtn">Apply Filters</button>
                             </div>
                         </div>
                     </form>
@@ -233,13 +233,18 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-table me-2"></i>
-                        Players List ({{ filtered_count }} players)
+                        Players List (<span id="filteredCount">{{ filtered_count }}</span> players)
                     </h5>
-                    <div class="pagination-info">
+                    <div class="pagination-info" id="paginationInfo">
                         Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                     </div>
                 </div>
                 <div class="card-body">
+                    <div id="loadingSpinner" class="text-center" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-dark table-hover">
                             <thead>
@@ -248,53 +253,40 @@
                                     <th>Player</th>
                                     <th>Team</th>
                                     <th>Position</th>
-                                    <th>Age</th>
                                     <th>Goals</th>
                                     <th>Assists</th>
-                                    <th>G/M</th>
-                                    <th>A/M</th>
-                                    <th>Shot Acc.</th>
+                                    <th>Minutes</th>
+                                    <th>Matches</th>
                                     <th>Performance</th>
-                                    <th>Value</th>
-                                    <th>Fitness</th>
+                                    <th>Value (M)</th>
+                                    <th>Age</th>
+                                    <th>Nationality</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="playersTableBody">
                                 {% for player in players %}
                                 <tr>
-                                    <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                    <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                                     <td>
                                         <strong>{{ player.player_name }}</strong>
-                                        <br><small class="text-muted">{{ player.height }}cm, {{ player.weight }}kg</small>
+                                        <br><small class="text-muted">{{ player.goals_per_match|floatformat:2 }} G/M</small>
                                     </td>
                                     <td>{{ player.club }}</td>
-                                    <td><span class="badge bg-secondary">{{ player.position }}</span></td>
-                                    <td>{{ player.age }}</td>
-                                    <td><span class="badge bg-warning">{{ player.goals }}</span></td>
-                                    <td><span class="badge bg-success">{{ player.assists }}</span></td>
-                                    <td>{{ player.goals_per_match|floatformat:2 }}</td>
-                                    <td>{{ player.assists_per_match|floatformat:2 }}</td>
-                                    <td>{{ player.shot_accuracy|floatformat:1 }}%</td>
+                                    <td>{{ player.position }}</td>
                                     <td>
-                                        <div class="performance-bar">
-                                            <div class="performance-fill" style="width: {% widthratio player.performance_rating 20 100 %}%"></div>
-                                        </div>
-                                        <small>{{ player.performance_rating|floatformat:1 }}</small>
+                                        <span class="badge bg-warning">{{ player.goals }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ player.assists }}</span>
+                                    </td>
+                                    <td>{{ player.minutes_played|floatformat:0 }}</td>
+                                    <td>{{ player.match_played }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ player.performance_rating|floatformat:1 }}</span>
                                     </td>
                                     <td>${{ player.estimated_value|floatformat:1 }}M</td>
-                                    <td>
-                                        <div class="fitness-indicator">
-                                            {% if player.fitness_score > 8 %}
-                                                <span class="badge bg-success">Excellent</span>
-                                            {% elif player.fitness_score > 6 %}
-                                                <span class="badge bg-info">Good</span>
-                                            {% elif player.fitness_score > 4 %}
-                                                <span class="badge bg-warning">Average</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Poor</span>
-                                            {% endif %}
-                                        </div>
-                                    </td>
+                                    <td>{{ player.age }}</td>
+                                    <td>{{ player.nationality }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -302,41 +294,47 @@
                     </div>
                     
                     <!-- Pagination -->
-                    {% if page_obj.has_other_pages %}
-                    <nav aria-label="Players pagination" class="mt-4">
+                    <nav aria-label="Players pagination" id="paginationNav">
                         <ul class="pagination justify-content-center">
                             {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">First</a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Previous</a>
-                                </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="1" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="{{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
                             {% endif %}
-                            
+
                             {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">{{ num }}</a>
-                                    </li>
-                                {% endif %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="{{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
                             {% endfor %}
-                            
+
                             {% if page_obj.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Next</a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_filters.position %}&position={{ current_filters.position }}{% endif %}{% if current_filters.team %}&team={{ current_filters.team }}{% endif %}{% if current_filters.sort %}&sort={{ current_filters.sort }}{% endif %}">Last</a>
-                                </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="{{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="{{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </nav>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -515,4 +513,166 @@
     font-size: 0.9rem;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('playerFilterForm');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const playersTableBody = document.getElementById('playersTableBody');
+    const filteredCount = document.getElementById('filteredCount');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationNav = document.getElementById('paginationNav');
+    
+    let currentPage = 1;
+    
+    function showLoading() {
+        loadingSpinner.style.display = 'block';
+        playersTableBody.style.opacity = '0.5';
+    }
+    
+    function hideLoading() {
+        loadingSpinner.style.display = 'none';
+        playersTableBody.style.opacity = '1';
+    }
+    
+    function updatePlayersTable(data) {
+        // Update filtered count
+        filteredCount.textContent = data.pagination.total_count;
+        
+        // Update pagination info
+        paginationInfo.textContent = `Page ${data.pagination.current_page} of ${data.pagination.total_pages}`;
+        
+        // Update table body
+        let tableHTML = '';
+        data.players.forEach((player, index) => {
+            const rowNumber = (data.pagination.current_page - 1) * 20 + index + 1;
+            tableHTML += `
+                <tr>
+                    <td>${rowNumber}</td>
+                    <td>
+                        <strong>${player.player_name}</strong>
+                        <br><small class="text-muted">${player.goals_per_match} G/M</small>
+                    </td>
+                    <td>${player.club}</td>
+                    <td>${player.position}</td>
+                    <td><span class="badge bg-warning">${player.goals}</span></td>
+                    <td><span class="badge bg-success">${player.assists}</span></td>
+                    <td>${player.minutes_played}</td>
+                    <td>${player.match_played}</td>
+                    <td><span class="badge bg-info">${player.performance_rating}</span></td>
+                    <td>$${player.estimated_value}M</td>
+                    <td>${player.age}</td>
+                    <td>${player.nationality}</td>
+                </tr>
+            `;
+        });
+        playersTableBody.innerHTML = tableHTML;
+        
+        // Update pagination
+        updatePagination(data.pagination);
+    }
+    
+    function updatePagination(pagination) {
+        let paginationHTML = '';
+        
+        // Previous buttons
+        if (pagination.has_previous) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="1" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${pagination.previous_page}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `;
+        }
+        
+        // Page numbers (show current page and 2 pages before/after)
+        const startPage = Math.max(1, pagination.current_page - 2);
+        const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === pagination.current_page) {
+                paginationHTML += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+            } else {
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            }
+        }
+        
+        // Next buttons
+        if (pagination.has_next) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${pagination.next_page}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${pagination.total_pages}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            `;
+        }
+        
+        paginationNav.querySelector('.pagination').innerHTML = paginationHTML;
+        
+        // Add click events to pagination links
+        paginationNav.querySelectorAll('.page-link[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage = parseInt(this.getAttribute('data-page'));
+                filterPlayers();
+            });
+        });
+    }
+    
+    function filterPlayers() {
+        showLoading();
+        
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+        
+        params.append('position', formData.get('position') || '');
+        params.append('team', formData.get('team') || '');
+        params.append('sort', formData.get('sort') || 'performance_rating');
+        params.append('page', currentPage);
+        
+        fetch(`/ajax/filter-players/?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    updatePlayersTable(data);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+                alert('An error occurred while filtering players.');
+            });
+    }
+    
+    // Event listeners
+    applyFiltersBtn.addEventListener('click', function() {
+        currentPage = 1;
+        filterPlayers();
+    });
+    
+    // Auto-filter on select change
+    filterForm.querySelectorAll('select').forEach(select => {
+        select.addEventListener('change', function() {
+            currentPage = 1;
+            filterPlayers();
+        });
+    });
+});
+</script>
 {% endblock %} 

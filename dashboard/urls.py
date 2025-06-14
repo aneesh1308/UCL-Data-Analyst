@@ -24,4 +24,9 @@ urlpatterns = [
     # API Endpoints
     path('api/player/<str:player_name>/', views.get_player_data, name='player_api'),
     path('api/team/<str:team_name>/', views.get_team_data, name='team_api'),
+    
+    # AJAX Endpoints
+    path('ajax/filter-players/', views.ajax_filter_players, name='ajax_filter_players'),
+    path('ajax/compare-teams/', views.ajax_compare_teams, name='ajax_compare_teams'),
+    path('ajax/teams-page/', views.ajax_get_teams_page, name='ajax_teams_page'),
 ] 

@@ -150,9 +150,9 @@
                     <h5 class="mb-0">Team Comparison</h5>
                 </div>
                 <div class="card-body">
-                    <form method="get" class="row g-3 mb-4">
+                    <form method="get" class="row g-3 mb-4" id="teamComparisonForm">
                         <div class="col-md-5">
-                            <select name="team1" class="form-select" required>
+                            <select name="team1" id="team1" class="form-select" required>
                                 <option value="">Select First Team</option>
                                 {% for team in team_stats %}
                                 <option value="{{ team.club }}" {% if current_filters.team1 == team.club %}selected{% endif %}>
@@ -162,7 +162,7 @@
                             </select>
                         </div>
                         <div class="col-md-5">
-                            <select name="team2" class="form-select" required>
+                            <select name="team2" id="team2" class="form-select" required>
                                 <option value="">Select Second Team</option>
                                 {% for team in team_stats %}
                                 <option value="{{ team.club }}" {% if current_filters.team2 == team.club %}selected{% endif %}>
@@ -172,58 +172,20 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100">Compare</button>
+                            <button type="button" class="btn btn-primary w-100" id="compareTeamsBtn">Compare</button>
                         </div>
                     </form>
 
-                    {% if comparison_data %}
-                    <div class="comparison-results">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="text-center mb-3">{{ comparison_data.team1.club }}</h6>
-                                <div class="comparison-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-label">Goals Scored</span>
-                                        <span class="stat-value">{{ comparison_data.team1.goals_for }}</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Goals Conceded</span>
-                                        <span class="stat-value">{{ comparison_data.team1.goals_against }}</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Win Rate</span>
-                                        <span class="stat-value">{{ comparison_data.team1.win_rate }}%</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Points</span>
-                                        <span class="stat-value">{{ comparison_data.team1.points }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-center mb-3">{{ comparison_data.team2.club }}</h6>
-                                <div class="comparison-stats">
-                                    <div class="stat-item">
-                                        <span class="stat-label">Goals Scored</span>
-                                        <span class="stat-value">{{ comparison_data.team2.goals_for }}</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Goals Conceded</span>
-                                        <span class="stat-value">{{ comparison_data.team2.goals_against }}</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Win Rate</span>
-                                        <span class="stat-value">{{ comparison_data.team2.win_rate }}%</span>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span class="stat-label">Points</span>
-                                        <span class="stat-value">{{ comparison_data.team2.points }}</span>
-                                    </div>
-                                </div>
+                    <div id="comparisonResults" style="display: none;">
+                        <div id="loadingComparison" class="text-center" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading comparison...</span>
                             </div>
                         </div>
+                        <div class="comparison-results" id="comparisonData">
+                            <!-- Comparison results will be inserted here -->
+                        </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -410,6 +372,196 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     {% endif %}
+
+    const teamComparisonForm = document.getElementById('teamComparisonForm');
+    const compareTeamsBtn = document.getElementById('compareTeamsBtn');
+    const comparisonResults = document.getElementById('comparisonResults');
+    const loadingComparison = document.getElementById('loadingComparison');
+    const comparisonData = document.getElementById('comparisonData');
+    const team1Select = document.getElementById('team1');
+    const team2Select = document.getElementById('team2');
+    
+    function showComparisonLoading() {
+        loadingComparison.style.display = 'block';
+        comparisonData.style.display = 'none';
+    }
+    
+    function hideComparisonLoading() {
+        loadingComparison.style.display = 'none';
+        comparisonData.style.display = 'block';
+    }
+    
+    function displayComparison(data) {
+        const team1 = data.team1;
+        const team2 = data.team2;
+        const comparison = data.comparison;
+        
+        const comparisonHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-center mb-3">${team1.club}</h6>
+                    <div class="comparison-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Goals Scored</span>
+                            <span class="stat-value">${team1.goals_for}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Assists</span>
+                            <span class="stat-value">${team1.assists}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Players</span>
+                            <span class="stat-value">${team1.total_players}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Performance</span>
+                            <span class="stat-value">${team1.avg_performance}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Value</span>
+                            <span class="stat-value">$${team1.total_value}M</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Age</span>
+                            <span class="stat-value">${team1.avg_age}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-value">${team1.win_rate}%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Goals Against</span>
+                            <span class="stat-value">${team1.goals_against}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-center mb-3">${team2.club}</h6>
+                    <div class="comparison-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Goals Scored</span>
+                            <span class="stat-value">${team2.goals_for}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Assists</span>
+                            <span class="stat-value">${team2.assists}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Players</span>
+                            <span class="stat-value">${team2.total_players}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Performance</span>
+                            <span class="stat-value">${team2.avg_performance}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Value</span>
+                            <span class="stat-value">$${team2.total_value}M</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Age</span>
+                            <span class="stat-value">${team2.avg_age}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-value">${team2.win_rate}%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Goals Against</span>
+                            <span class="stat-value">${team2.goals_against}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="text-center mb-3">Comparison Summary</h6>
+                    <div class="comparison-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Goals Difference:</span>
+                            <span class="summary-value ${comparison.goals_diff > 0 ? 'text-success' : comparison.goals_diff < 0 ? 'text-danger' : 'text-warning'}">
+                                ${comparison.goals_diff > 0 ? '+' : ''}${comparison.goals_diff}
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Assists Difference:</span>
+                            <span class="summary-value ${comparison.assists_diff > 0 ? 'text-success' : comparison.assists_diff < 0 ? 'text-danger' : 'text-warning'}">
+                                ${comparison.assists_diff > 0 ? '+' : ''}${comparison.assists_diff}
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Performance Difference:</span>
+                            <span class="summary-value ${comparison.performance_diff > 0 ? 'text-success' : comparison.performance_diff < 0 ? 'text-danger' : 'text-warning'}">
+                                ${comparison.performance_diff > 0 ? '+' : ''}${comparison.performance_diff.toFixed(1)}
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Value Difference:</span>
+                            <span class="summary-value ${comparison.value_diff > 0 ? 'text-success' : comparison.value_diff < 0 ? 'text-danger' : 'text-warning'}">
+                                ${comparison.value_diff > 0 ? '+' : ''}$${comparison.value_diff.toFixed(1)}M
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        comparisonData.innerHTML = comparisonHTML;
+        comparisonResults.style.display = 'block';
+    }
+    
+    function compareTeams() {
+        const team1 = team1Select.value;
+        const team2 = team2Select.value;
+        
+        if (!team1 || !team2) {
+            alert('Please select both teams to compare.');
+            return;
+        }
+        
+        if (team1 === team2) {
+            alert('Please select different teams to compare.');
+            return;
+        }
+        
+        showComparisonLoading();
+        comparisonResults.style.display = 'block';
+        
+        const params = new URLSearchParams();
+        params.append('team1', team1);
+        params.append('team2', team2);
+        
+        fetch(`/ajax/compare-teams/?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                hideComparisonLoading();
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    comparisonResults.style.display = 'none';
+                } else {
+                    displayComparison(data);
+                }
+            })
+            .catch(error => {
+                hideComparisonLoading();
+                console.error('Error:', error);
+                alert('An error occurred while comparing teams.');
+                comparisonResults.style.display = 'none';
+            });
+    }
+    
+    // Event listeners
+    compareTeamsBtn.addEventListener('click', compareTeams);
+    
+    // Auto-compare when both teams are selected
+    function checkAutoCompare() {
+        if (team1Select.value && team2Select.value && team1Select.value !== team2Select.value) {
+            compareTeams();
+        }
+    }
+    
+    team1Select.addEventListener('change', checkAutoCompare);
+    team2Select.addEventListener('change', checkAutoCompare);
 });
 </script>
 
@@ -517,6 +669,33 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #495057;
     border-color: #495057;
     color: #ffffff;
+}
+
+.comparison-summary {
+    background-color: #2b3035;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    text-align: center;
+    margin: 10px;
+}
+
+.summary-label {
+    display: block;
+    color: #adb5bd;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.summary-value {
+    display: block;
+    font-weight: bold;
+    font-size: 1.2em;
 }
 </style>
 {% endblock %} 

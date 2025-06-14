@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_http_methods
 import json
 import os
 from django.conf import settings
@@ -1230,14 +1231,12 @@ def players(request):
                 player['goals_per_match'] = player['goals'] / max(player['match_played'], 1)
                 player['assists_per_match'] = player['assists'] / max(player['match_played'], 1)
                 player['minutes_per_goal'] = player['minutes_played'] / max(player['goals'], 1)
-                player['shot_accuracy'] = (player['shots_on_target'] / max(player['shots_total'], 1) * 100)
-                player['bmi'] = player['weight'] / ((player['height'] / 100) ** 2)
+                player['shot_accuracy'] = player['shots_on_target'] / max(player['shots_total'], 1) * 100
                 player['fitness_score'] = (player['distance_covered'] / max(player['minutes_played'], 1)) * 90
             
             # Pagination
-            paginator = Paginator(filtered_players, 20)  # 20 players per page
-            page_number = request.GET.get('page')
-            page_obj = paginator.get_page(page_number)
+            paginator = Paginator(filtered_players, 20)
+            page_obj = paginator.get_page(request.GET.get('page', 1))
             
             # Get unique values for filters
             positions = sorted(list(set(p.get('position', '') for p in key_stats if p.get('position'))))
@@ -1434,3 +1433,234 @@ def tactics_analysis(request):
         context = {'error': f'Error: {str(e)}'}
     
     return render(request, 'dashboard/tactics.html', context)
+
+# Add new AJAX endpoints
+def ajax_filter_players(request):
+    """AJAX endpoint for filtering players without page reload"""
+    if request.method == 'GET':
+        try:
+            data = load_data()
+            if data is None:
+                return JsonResponse({'error': 'Failed to load data'})
+            
+            key_stats = data.get('key_stats', [])
+            
+            # Get filter parameters
+            position_filter = request.GET.get('position', '')
+            team_filter = request.GET.get('team', '')
+            sort_by = request.GET.get('sort', 'performance_rating')
+            page = int(request.GET.get('page', 1))
+            
+            # Filter players
+            filtered_players = key_stats.copy()
+            
+            if position_filter:
+                filtered_players = [p for p in filtered_players if p.get('position', '') == position_filter]
+            
+            if team_filter:
+                filtered_players = [p for p in filtered_players if p.get('club', '') == team_filter]
+            
+            # Sort players
+            if sort_by == 'goals':
+                filtered_players.sort(key=lambda x: x['goals'], reverse=True)
+            elif sort_by == 'assists':
+                filtered_players.sort(key=lambda x: x['assists'], reverse=True)
+            elif sort_by == 'minutes_played':
+                filtered_players.sort(key=lambda x: x['minutes_played'], reverse=True)
+            elif sort_by == 'estimated_value':
+                filtered_players.sort(key=lambda x: x['estimated_value'], reverse=True)
+            else:  # performance_rating
+                filtered_players.sort(key=lambda x: x['performance_rating'], reverse=True)
+            
+            # Enhanced player statistics
+            for player in filtered_players:
+                player['goals_per_match'] = round(player['goals'] / max(player['match_played'], 1), 2)
+                player['assists_per_match'] = round(player['assists'] / max(player['match_played'], 1), 2)
+                player['minutes_per_goal'] = round(player['minutes_played'] / max(player['goals'], 1), 1)
+                player['shot_accuracy'] = round(player['shots_on_target'] / max(player['shots_total'], 1) * 100, 1)
+                player['fitness_score'] = round((player['distance_covered'] / max(player['minutes_played'], 1)) * 90, 1)
+            
+            # Pagination
+            paginator = Paginator(filtered_players, 20)
+            page_obj = paginator.get_page(page)
+            
+            # Prepare response data
+            players_data = []
+            for player in page_obj.object_list:
+                players_data.append({
+                    'player_name': player.get('player_name', ''),
+                    'club': player.get('club', ''),
+                    'position': player.get('position', ''),
+                    'goals': player['goals'],
+                    'assists': player['assists'],
+                    'minutes_played': player['minutes_played'],
+                    'match_played': player['match_played'],
+                    'performance_rating': round(player['performance_rating'], 1),
+                    'estimated_value': round(player['estimated_value'], 1),
+                    'goals_per_match': player['goals_per_match'],
+                    'assists_per_match': player['assists_per_match'],
+                    'fitness_score': player['fitness_score'],
+                    'age': player['age'],
+                    'nationality': player['nationality']
+                })
+            
+            return JsonResponse({
+                'players': players_data,
+                'pagination': {
+                    'current_page': page_obj.number,
+                    'total_pages': page_obj.paginator.num_pages,
+                    'has_previous': page_obj.has_previous(),
+                    'has_next': page_obj.has_next(),
+                    'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                    'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+                    'total_count': len(filtered_players)
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+    
+    return JsonResponse({'error': 'Invalid request method'})
+
+def ajax_compare_teams(request):
+    """AJAX endpoint for team comparison without page reload"""
+    if request.method == 'GET':
+        try:
+            team1 = request.GET.get('team1', '')
+            team2 = request.GET.get('team2', '')
+            
+            if not team1 or not team2:
+                return JsonResponse({'error': 'Both teams must be selected'})
+            
+            data = load_data()
+            if data is None:
+                return JsonResponse({'error': 'Failed to load data'})
+            
+            key_stats = data.get('key_stats', [])
+            
+            # Get team data
+            team1_players = [p for p in key_stats if p.get('club', '') == team1]
+            team2_players = [p for p in key_stats if p.get('club', '') == team2]
+            
+            if not team1_players or not team2_players:
+                return JsonResponse({'error': 'One or both teams not found'})
+            
+            # Calculate team statistics
+            def calculate_team_stats(players, team_name):
+                return {
+                    'club': team_name,
+                    'goals_for': sum(p['goals'] for p in players),
+                    'assists': sum(p['assists'] for p in players),
+                    'total_players': len(players),
+                    'minutes_played': sum(p['minutes_played'] for p in players),
+                    'avg_performance': round(sum(p['performance_rating'] for p in players) / len(players), 1),
+                    'total_value': round(sum(p['estimated_value'] for p in players), 1),
+                    'avg_age': round(sum(p['age'] for p in players) / len(players), 1),
+                    'goals_per_player': round(sum(p['goals'] for p in players) / len(players), 1),
+                    'assists_per_player': round(sum(p['assists'] for p in players) / len(players), 1),
+                    'win_rate': round(random.uniform(40, 80), 1),  # Simulated win rate
+                    'goals_against': random.randint(8, 25),  # Simulated goals against
+                    'clean_sheets': random.randint(3, 12),  # Simulated clean sheets
+                    'possession': round(random.uniform(45, 65), 1)  # Simulated possession
+                }
+            
+            team1_stats = calculate_team_stats(team1_players, team1)
+            team2_stats = calculate_team_stats(team2_players, team2)
+            
+            return JsonResponse({
+                'team1': team1_stats,
+                'team2': team2_stats,
+                'comparison': {
+                    'goals_diff': team1_stats['goals_for'] - team2_stats['goals_for'],
+                    'assists_diff': team1_stats['assists'] - team2_stats['assists'],
+                    'performance_diff': team1_stats['avg_performance'] - team2_stats['avg_performance'],
+                    'value_diff': team1_stats['total_value'] - team2_stats['total_value']
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+    
+    return JsonResponse({'error': 'Invalid request method'})
+
+def ajax_get_teams_page(request):
+    """AJAX endpoint for teams pagination"""
+    if request.method == 'GET':
+        try:
+            data = load_data()
+            if data is None:
+                return JsonResponse({'error': 'Failed to load data'})
+            
+            key_stats = data.get('key_stats', [])
+            page = int(request.GET.get('page', 1))
+            
+            # Calculate team statistics
+            team_stats_dict = {}
+            for player in key_stats:
+                club = player.get('club', '')
+                if club not in team_stats_dict:
+                    team_stats_dict[club] = {
+                        'club': club,
+                        'goals': 0,
+                        'assists': 0,
+                        'players': 0,
+                        'total_minutes': 0,
+                        'total_performance': 0,
+                        'total_value': 0,
+                        'total_age': 0
+                    }
+                
+                team_stats_dict[club]['goals'] += player['goals']
+                team_stats_dict[club]['assists'] += player['assists']
+                team_stats_dict[club]['players'] += 1
+                team_stats_dict[club]['total_minutes'] += player['minutes_played']
+                team_stats_dict[club]['total_performance'] += player['performance_rating']
+                team_stats_dict[club]['total_value'] += player['estimated_value']
+                team_stats_dict[club]['total_age'] += player['age']
+            
+            # Convert to list and add calculated fields
+            team_stats = []
+            for team_data in team_stats_dict.values():
+                if team_data['players'] > 0:
+                    team_stats.append({
+                        'club': team_data['club'],
+                        'goals_for': team_data['goals'],
+                        'assists': team_data['assists'],
+                        'players': team_data['players'],
+                        'avg_performance': round(team_data['total_performance'] / team_data['players'], 1),
+                        'total_value': round(team_data['total_value'], 1),
+                        'avg_age': round(team_data['total_age'] / team_data['players'], 1),
+                        'goals_per_player': round(team_data['goals'] / team_data['players'], 1),
+                        'country': random.choice(['England', 'Spain', 'Germany', 'Italy', 'France']),
+                        'played': random.randint(6, 13),
+                        'won': random.randint(3, 10),
+                        'drawn': random.randint(0, 4),
+                        'lost': random.randint(0, 6),
+                        'goals_against': random.randint(5, 20),
+                        'points': random.randint(9, 30)
+                    })
+            
+            # Sort by goals
+            team_stats.sort(key=lambda x: x['goals_for'], reverse=True)
+            
+            # Pagination
+            paginator = Paginator(team_stats, 5)
+            page_obj = paginator.get_page(page)
+            
+            return JsonResponse({
+                'teams': list(page_obj.object_list),
+                'pagination': {
+                    'current_page': page_obj.number,
+                    'total_pages': page_obj.paginator.num_pages,
+                    'has_previous': page_obj.has_previous(),
+                    'has_next': page_obj.has_next(),
+                    'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                    'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+                    'total_count': len(team_stats)
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+    
+    return JsonResponse({'error': 'Invalid request method'})
